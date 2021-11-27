@@ -1,2 +1,2 @@
-from .backtesting import BackTest
-from .heroku_connect import *
+from ._backtesting import BackTest
+from ._heroku_connect import *
