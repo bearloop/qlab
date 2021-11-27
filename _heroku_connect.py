@@ -5,7 +5,7 @@ from ._ft_market_data import ft_aggregate, ft_summary, ft_sectors, ft_securities
 from ._sql_statements import *
 
  
-class herokuDB:
+class HerokuDB:
     
     def __init__(self, uri):
         self.uri = uri
