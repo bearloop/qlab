@@ -122,6 +122,32 @@ def plot_var(df=None, window=21, forward=21, conf=0.05, chart_title='Historical 
             return fig  
 
 # --------------------------------------------------------------------------------------------
+def plot_correl(df=None, window=21, base=None, chart_title='Correlation', legend=False, to_return=False, width=720, height=360):
+    """
+    Plots correlation between the base asset and all other assets on a rolling basis over the window period.
+    """
+    if (df is None) or (base is None): 
+        return _plot_none(chart_title=chart_title, width=width, height=height)
+    
+    else:
+        cor = df.rolling(window).corr()[base].unstack()
+
+        hover = _chart_format_dict['Value'][0]
+        yformat = _chart_format_dict['Value'][1]
+
+        fig = _template_line(cor, chart_title=chart_title, legend=legend, width=width, height=height, template=_charts_template
+                ).update_traces(hovertemplate=hover).update_yaxes(tickformat=yformat)
+
+        # Show or return the plot
+        if to_return==False:
+            fig.show()
+        
+        else:
+            return fig  
+
+
+
+# --------------------------------------------------------------------------------------------
 def _plot_none(chart_title=None, width=720, height=360):
     """
     Makes sure that plots return an empty chart.
