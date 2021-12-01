@@ -10,7 +10,7 @@ _cool_colors = ["#001219","#005f73","#0a9396","#94d2bd","#e9d8a6",
                "#ee9b00","#ca6702","#bb3e03","#ae2012","#9b2226"]
 
 _chart_format_dict = {'Percent':["Date: %{x|%Y-%m-%d}<br>Value: %{y:.1%}", ".0%"],
-                     'Value':  ["Date: %{x|%Y-%m-%d}<br>Value: %{y}",     ".1f"]}
+                      'Value':  ["Date: %{x|%Y-%m-%d}<br>Value: %{y}",     ".1f"]}
 
 _charts_template='simple_white'
 
@@ -70,7 +70,7 @@ def plot_vol(df=None, window=21, freq=252, chart_title='Historical Volatility', 
             fig.show()
         
         else:
-            return fig  
+            return fig
 
 # --------------------------------------------------------------------------------------------
 def plot_ddown(df=None, chart_title='Drawdown', legend=False, to_return=False, width=720, height=360):
@@ -96,7 +96,31 @@ def plot_ddown(df=None, chart_title='Drawdown', legend=False, to_return=False, w
             fig.show()
         
         else:
-            return fig 
+            return fig
+
+# --------------------------------------------------------------------------------------------
+def plot_var(df=None, window=21, forward=21, conf=0.05, chart_title='Historical VaR', legend=False, to_return=False, width=720, height=360):
+    """
+    Plots the forward-N periods (e.g. 21-days) value at risk based on the window's hist distribution.
+    """
+    if df is None: 
+        return _plot_none(chart_title=chart_title, width=width, height=height)
+    
+    else:
+        conf=0.95
+        var = df.pct_change().rolling(window=window, min_periods=window).quantile(1-conf)*_np.sqrt(forward)
+        hover = _chart_format_dict['Percent'][0]
+        yformat = _chart_format_dict['Percent'][1]
+
+        fig = _template_line(var, chart_title=chart_title, legend=legend, width=width, height=height, template=_charts_template
+                ).update_traces(hovertemplate=hover).update_yaxes(tickformat=yformat)
+
+        # Show or return the plot
+        if to_return==False:
+            fig.show()
+        
+        else:
+            return fig  
 
 # --------------------------------------------------------------------------------------------
 def _plot_none(chart_title=None, width=720, height=360):
