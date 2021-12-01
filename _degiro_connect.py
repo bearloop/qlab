@@ -100,14 +100,17 @@ class DeGiro():
             print('Session id fetch failed')
     
     # --------------------------------------------------------------------------------------------------------------
-    def securities_dict(self, df):
+    def securities_dict(self, df, assets=None):
         '''
         Returns a list of dictionaries from a two-column dataframe. They keys of each dictionary are the values of
         the first column and its values are the values of the second column.
         df: a two-column dataframe with no missing values
         '''
-    
-        return list(map(lambda x: {str(x[0]):str(x[1])}, df.dropna().values))
+        ls = list(map(lambda x: {str(x[0]):str(x[1])}, df.dropna().values))
+        if assets is None:
+            return ls
+        else:
+            return list(filter(lambda x: list(x.values())[0] in assets, ls))
     # --------------------------------------------------------------------------------------------------------------
     
     def comp_series(self, securities, ts_type='price', date_range={'range':None,'auto':'P1Y'}):

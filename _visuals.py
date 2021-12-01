@@ -99,7 +99,7 @@ def plot_ddown(df=None, chart_title='Drawdown', legend=False, to_return=False, w
             return fig
 
 # --------------------------------------------------------------------------------------------
-def plot_var(df=None, window=21, forward=21, conf=0.05, chart_title='Historical VaR', legend=False, to_return=False, width=720, height=360):
+def plot_var(df=None, window=21, forward=21, conf=0.95, chart_title='Historical VaR', legend=False, to_return=False, width=720, height=360):
     """
     Plots the forward-N periods (e.g. 21-days) value at risk based on the window's hist distribution.
     """
@@ -124,17 +124,19 @@ def plot_var(df=None, window=21, forward=21, conf=0.05, chart_title='Historical 
 # --------------------------------------------------------------------------------------------
 def plot_correl(df=None, window=21, base=None, chart_title='Correlation', legend=False, to_return=False, width=720, height=360):
     """
-    Plots correlation between the base asset and all other assets on a rolling basis over the window period.
+    Plots the correlation of the base asset and every other asset on a rolling basis over the window period.
     """
     if (df is None) or (base is None): 
         return _plot_none(chart_title=chart_title, width=width, height=height)
     
     else:
-        cor = df.rolling(window).corr()[base].unstack()
+        # Calculate correlation for base vs all other assets and then remove the base asset col
+        cor = df.rolling(window).corr()[base].unstack().drop([base],axis=1)
 
         hover = _chart_format_dict['Value'][0]
         yformat = _chart_format_dict['Value'][1]
 
+        chart_title = chart_title + ' vs '+base
         fig = _template_line(cor, chart_title=chart_title, legend=legend, width=width, height=height, template=_charts_template
                 ).update_traces(hovertemplate=hover).update_yaxes(tickformat=yformat)
 
