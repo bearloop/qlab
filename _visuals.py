@@ -107,7 +107,6 @@ def plot_var(df=None, window=21, forward=21, conf=0.05, chart_title='Historical 
         return _plot_none(chart_title=chart_title, width=width, height=height)
     
     else:
-        conf=0.95
         var = df.pct_change().rolling(window=window, min_periods=window).quantile(1-conf)*_np.sqrt(forward)
         hover = _chart_format_dict['Percent'][0]
         yformat = _chart_format_dict['Percent'][1]
