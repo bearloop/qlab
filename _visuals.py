@@ -9,6 +9,8 @@ import plotly.express as _px
 _cool_colors = ["#001219","#005f73","#0a9396","#94d2bd","#e9d8a6",
                "#ee9b00","#ca6702","#bb3e03","#ae2012","#9b2226"]
 
+_cmx_colors = ["#e39774","#e5e5e5","#5c9ead"]
+
 _chart_format_dict = {'Percent':["Date: %{x|%Y-%m-%d}<br>Value: %{y:.1%}", ".0%"       ],
                       'Value':  ["Date: %{x|%Y-%m-%d}<br>Value: %{y}",     ".1f"       ],
                       'Density':["Return: %{x}<br>Count: %{y}",            ".0f", ".1%"]}
@@ -177,6 +179,38 @@ def plot_hist(df=None, chart_title='Returns KDE', legend=False, to_return=False,
         else:
             return fig 
 
+def plot_cmx(df=None, chart_title='Correlation matrix', colorbar=False, to_return=False, width=720, height=360):
+
+    if df is None: 
+        return _plot_none(chart_title=chart_title, width=width, height=height)
+    
+    else:
+
+        cor = df.corr()
+        cor = cor.mask(_np.tril(cor.values,-1)==0)
+
+
+        cor = cor.dropna(how='all').dropna(how='all',axis=1)
+        fig = _ff.create_annotated_heatmap(cor.values.round(2),
+                                    x=list(cor.columns),y=list(cor.index),reversescale=True,
+                                    colorscale=_cmx_colors,hoverinfo='z',showscale=colorbar, xgap = 2, ygap = 2)
+
+        fig.update_layout(width = width, height = height, plot_bgcolor='white', 
+                         font = dict(color="#505050", size=12, family='sans-serif'),
+                         margin = {'l':0, 't':50, 'r':10, 'b':0, 'pad':0},
+                         title={'text':chart_title, 'xref':'paper', 'x':1, 'xanchor': 'right',
+                                'font':{'size':15, 'family':'sans-serif'}})
+
+        fig.update_xaxes(showline=True, linewidth=0.25, linecolor='black', showgrid=False, ticks="outside", title_text='')
+        fig.update_yaxes(showline=True, linewidth=0.25, linecolor='black', showgrid=False, ticks="outside", title_text='',
+                         autorange='reversed')
+        
+        # Show or return the plot
+        if to_return==False:
+            fig.show()
+        
+        else:
+            return fig 
 # --------------------------------------------------------------------------------------------
 def _plot_none(chart_title=None, width=720, height=360):
     """
