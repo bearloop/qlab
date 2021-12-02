@@ -1,7 +1,7 @@
 import pandas as _pd
 import numpy as _np
 from datetime import date as _date
-from datetime import datetime as _datetime
+import plotly.figure_factory as _ff
 from datetime import timedelta as _timedelta
 import plotly.express as _px
 
@@ -9,8 +9,9 @@ import plotly.express as _px
 _cool_colors = ["#001219","#005f73","#0a9396","#94d2bd","#e9d8a6",
                "#ee9b00","#ca6702","#bb3e03","#ae2012","#9b2226"]
 
-_chart_format_dict = {'Percent':["Date: %{x|%Y-%m-%d}<br>Value: %{y:.1%}", ".0%"],
-                      'Value':  ["Date: %{x|%Y-%m-%d}<br>Value: %{y}",     ".1f"]}
+_chart_format_dict = {'Percent':["Date: %{x|%Y-%m-%d}<br>Value: %{y:.1%}", ".0%"       ],
+                      'Value':  ["Date: %{x|%Y-%m-%d}<br>Value: %{y}",     ".1f"       ],
+                      'Density':["Return: %{x}<br>Count: %{y}",            ".0f", ".1%"]}
 
 _charts_template='simple_white'
 
@@ -147,7 +148,35 @@ def plot_correl(df=None, window=21, base=None, chart_title='Correlation', legend
         else:
             return fig  
 
+# --------------------------------------------------------------------------------------------
+def plot_hist(df=None, chart_title='Returns KDE', legend=False, to_return=False, width=720, height=360):
+    
+    if df is None: 
+        return _plot_none(chart_title=chart_title, width=width, height=height)
+    
+    else:
+        labels = list(df.columns)
+        data = [df[i].dropna().pct_change().dropna() for i in labels]
 
+        hover = _chart_format_dict['Density'][0]
+        yformat = _chart_format_dict['Density'][1]
+        xformat = _chart_format_dict['Density'][2]
+
+        fig = _ff.create_distplot(data, group_labels=labels, show_curve='kde',
+                                  show_hist=False, show_rug=False, colors=_cool_colors)
+        
+        fig = fig.update_traces(hovertemplate=hover
+                ).update_xaxes(tickformat=xformat).update_yaxes(tickformat=yformat)
+         
+        fig = _density_layout(fig=fig, title=chart_title, legend=legend,
+                              width=width, height=height, template=_charts_template)
+        
+        # Show or return the plot
+        if to_return==False:
+            fig.show()
+        
+        else:
+            return fig 
 
 # --------------------------------------------------------------------------------------------
 def _plot_none(chart_title=None, width=720, height=360):
@@ -161,7 +190,7 @@ def _plot_none(chart_title=None, width=720, height=360):
 
 
 # --------------------------------------------------------------------------------------------
-def _template_line(df=None, chart_title=None, legend=False, width=720, height=360, template='simple_white'):
+def _template_line(df=None, chart_title=None, legend=False, width=720, height=360, template=_charts_template):
     """ """
     
     # Make the line plot
@@ -200,8 +229,17 @@ def _time_layout(fig, title, legend, width, height):
         ).update_xaxes(tickformatstops=xaxis_tickformatstops, title_text='',
         ).update_yaxes(title_text='')
 
-    return fig
+    return fig 
 
+# --------------------------------------------------------------------------------------------
+def _density_layout(fig, title, legend, width, height, template):
+    """ """
+    fig = _time_layout(fig=fig, title=title, legend=legend, width=width, height=height)
+    fig = fig.update_layout(template=template
+            ).update_yaxes(title_text=''
+            ).update_xaxes(title_text='',tickformatstops=None)
+
+    return fig
 
 # --------------------------------------------------------------------------------------------
 def _add_space(df, fig):
