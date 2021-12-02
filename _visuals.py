@@ -164,13 +164,12 @@ def plot_hist(df=None, chart_title='Returns KDE', legend=False, to_return=False,
 
         fig = _ff.create_distplot(data, group_labels=labels, show_curve='kde',
                                   show_hist=False, show_rug=False, colors=_cool_colors)
-        
-        fig = fig.update_traces(hovertemplate=hover
-                ).update_xaxes(tickformat=xformat).update_yaxes(tickformat=yformat)
          
-        fig = _density_layout(fig=fig, title=chart_title, legend=legend,
-                              width=width, height=height, template=_charts_template)
+        fig = _time_layout(fig=fig, title=chart_title, legend=legend, width=width, height=height)
         
+        fig = fig.update_layout(template=_charts_template).update_traces(hovertemplate=hover
+                ).update_xaxes(tickformatstops = [dict(value=xformat)]).update_yaxes(tickformat=yformat)
+
         # Show or return the plot
         if to_return==False:
             fig.show()
@@ -228,16 +227,6 @@ def _time_layout(fig, title, legend, width, height):
                    'font':{'size':15, 'family':'sans-serif'}}
         ).update_xaxes(tickformatstops=xaxis_tickformatstops, title_text='',
         ).update_yaxes(title_text='')
-
-    return fig 
-
-# --------------------------------------------------------------------------------------------
-def _density_layout(fig, title, legend, width, height, template):
-    """ """
-    fig = _time_layout(fig=fig, title=title, legend=legend, width=width, height=height)
-    fig = fig.update_layout(template=template
-            ).update_yaxes(title_text=''
-            ).update_xaxes(title_text='',tickformatstops=None)
 
     return fig
 
