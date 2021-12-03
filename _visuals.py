@@ -179,6 +179,7 @@ def plot_hist(df=None, chart_title='Returns KDE', legend=False, to_return=False,
         else:
             return fig 
 
+# --------------------------------------------------------------------------------------------
 def plot_cmx(df=None, chart_title='Correlation matrix', colorbar=False, to_return=False, width=720, height=360):
 
     if df is None: 
@@ -195,15 +196,16 @@ def plot_cmx(df=None, chart_title='Correlation matrix', colorbar=False, to_retur
                                     x=list(cor.columns),y=list(cor.index),reversescale=True,
                                     colorscale=_cmx_colors,hoverinfo='z',showscale=colorbar, xgap = 2, ygap = 2)
 
-        fig.update_layout(width = width, height = height, plot_bgcolor='white', 
+        fig = fig.update_layout(width = width, height = height, plot_bgcolor='white', 
                          font = dict(color="#505050", size=12, family='sans-serif'),
-                         margin = {'l':0, 't':50, 'r':10, 'b':0, 'pad':0},
+                         margin = {'l':0, 't':65, 'r':10, 'b':0, 'pad':0},
                          title={'text':chart_title, 'xref':'paper', 'x':1, 'xanchor': 'right',
                                 'font':{'size':15, 'family':'sans-serif'}})
 
-        fig.update_xaxes(showline=True, linewidth=0.25, linecolor='black', showgrid=False, ticks="outside", title_text='')
-        fig.update_yaxes(showline=True, linewidth=0.25, linecolor='black', showgrid=False, ticks="outside", title_text='',
-                         autorange='reversed')
+        fig = fig.update_xaxes(showline=True, linewidth=0.25, linecolor='black', showgrid=False,
+                              ticks="outside", title_text=None
+                              ).update_yaxes(showline=True, linewidth=0.25, linecolor='black', showgrid=False, 
+                              ticks="outside", title_text=None, autorange='reversed')
         
         # Show or return the plot
         if to_return==False:
@@ -211,6 +213,7 @@ def plot_cmx(df=None, chart_title='Correlation matrix', colorbar=False, to_retur
         
         else:
             return fig 
+
 # --------------------------------------------------------------------------------------------
 def _plot_none(chart_title=None, width=720, height=360):
     """
