@@ -186,12 +186,11 @@ def plot_cmx(df=None, chart_title='Correlation matrix', colorbar=False, to_retur
         return _plot_none(chart_title=chart_title, width=width, height=height)
     
     else:
-
+        # This will hide the upper triangle of the table
         cor = df.corr()
         cor = cor.mask(_np.tril(cor.values,-1)==0)
-
-
         cor = cor.dropna(how='all').dropna(how='all',axis=1)
+        
         fig = _ff.create_annotated_heatmap(cor.values.round(2),
                                     x=list(cor.columns),y=list(cor.index),reversescale=True,
                                     colorscale=_cmx_colors,hoverinfo='z',showscale=colorbar, xgap = 2, ygap = 2)

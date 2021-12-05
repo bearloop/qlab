@@ -3,7 +3,7 @@ import pandas as _pd
 import requests as _requests
 from ._ft_market_data import ft_aggregate, ft_summary, ft_sectors, ft_securities
 from ._sql_statements import *
-
+from ._utilities import _convert_df_to_str, _convert_str_to_df
  
 class HerokuDB:
     
@@ -160,4 +160,37 @@ class HerokuDB:
                              data=tuple(funds_data.loc[etf].astype(str)) )
         
     # --------------------------------------------------------------------------------------------
+    def prices_table_update(self, df):
+        """ """
+        for asset in df.columns:
+            prices_as_string = _convert_df_to_str(df, column=asset)
+            self.execute_sql(query = sql_prices_insert_query, data=(asset, prices_as_string))
     
+    # --------------------------------------------------------------------------------------------
+    def prices_table_read(self, assets_list=None):
+        """ """
+        try:
+            if assets_list is None:
+                # Use all available symbols in the prices table
+                query = 'SELECT * FROM prices'
+
+            else:
+                # Use the passed list to filter the prices table
+                query = "SELECT * FROM prices WHERE symbol IN {}".format(tuple(assets_list))
+            
+            # Fetch data and create a data frame
+            self.execute_sql(query=query)
+            df = self.fetch()
+            df = df.set_index('symbol').T
+
+            results = _pd.DataFrame()
+
+            # Unpack data and move them to a dataframe
+            for asset in df.columns:
+                values = df.loc['data',asset]
+                prices_as_df = _convert_str_to_df(values, asset)
+                results = _pd.concat([results,prices_as_df],axis=1)
+
+            return results
+        except Exception as e:
+            print(e.args)

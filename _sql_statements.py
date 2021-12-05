@@ -1,4 +1,10 @@
 # CREATE TABLES
+sql_prices_table_create = """
+                          CREATE TABLE IF NOT EXISTS prices (
+                              symbol text NOT NULL PRIMARY KEY,
+                              data text NOT NULL)
+                           """
+
 sql_securities_table_create = """
                           CREATE TABLE IF NOT EXISTS securities(
                               dg_id varchar NOT NULL PRIMARY KEY,
@@ -59,6 +65,8 @@ sql_etfs_data_table_create = """
 
 # ------------------------------------------------------------------------------------------
 # DROP TABLES
+sql_prices_table_drop = """DROP TABLE IF EXISTS prices"""
+
 sql_securities_table_drop = """DROP TABLE IF EXISTS securities"""
 
 sql_exchanges_table_drop = """DROP TABLE IF EXISTS exchanges"""
@@ -71,6 +79,15 @@ sql_etfs_data_table_drop = """DROP TABLE IF EXISTS etfs_data"""
 
 # ------------------------------------------------------------------------------------------
 # INSERT RECORDS
+sql_prices_insert_query = """
+                        INSERT INTO prices (
+                             symbol,
+                             data)
+                             VALUES (%s, %s)
+                             ON CONFLICT (symbol)
+                                 DO UPDATE SET data = EXCLUDED.data
+                        """
+
 sql_security_insert_query = """
                         INSERT INTO securities (
                              dg_id,
@@ -164,6 +181,10 @@ sql_etfs_data_insert_query = """
 
 # ------------------------------------------------------------------------------------------
 # DELETE RECORDS
+sql_prices_delete_query = """
+                           DELETE FROM prices WHERE symbol = %s
+                           """
+
 sql_ft_exchange_delete_query = """
                            DELETE FROM ft_exchanges WHERE exchange_id = %s
                            """

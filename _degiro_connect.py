@@ -155,11 +155,12 @@ class DeGiro():
 
             data = _json.loads(_requests.get(url).content)['series']
             ts = self._transform_time_series_response(data=data, column_name=security_name)
+            ts.index = _pd.to_datetime(ts.index)
 
             return ts
         
         except Exception as e:
-            print(security_id, e.args)
+            print(list(security.values())[0], e.args)
     
     # --------------------------------------------------------------------------------------------------------------
     def _get_time_period(self, date_range):
