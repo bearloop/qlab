@@ -21,11 +21,6 @@ def _convert_df_to_str(df,column):
     
     return ts_as_string
 
-def _merge_data(df_old, df_new):
-    
-    df_merged = _pd.concat([df_old,df_new],axis=0)
-    
-    return df_merged
 
 # --------------------------------------------------------------------------------------------
 def utils_control(data, rf=0, freq=252, ignore_na=False, asset_list=None, start=None, end=None):

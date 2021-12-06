@@ -1,6 +1,7 @@
 import pandas as _pd
 import numpy as _np
 from datetime import date as _date
+from datetime import datetime as _datetime
 import plotly.figure_factory as _ff
 from datetime import timedelta as _timedelta
 import plotly.express as _px
@@ -134,7 +135,7 @@ def plot_correl(df=None, window=21, base=None, chart_title='Correlation', legend
     
     else:
         # Calculate correlation for base vs all other assets and then remove the base asset col
-        cor = df.rolling(window).corr()[base].unstack().drop([base],axis=1)
+        cor = df.pct_change().rolling(window).corr()[base].unstack().drop([base],axis=1)
 
         hover = _chart_format_dict['Value'][0]
         yformat = _chart_format_dict['Value'][1]
@@ -179,17 +180,43 @@ def plot_hist(df=None, chart_title='Returns KDE', legend=False, to_return=False,
         else:
             return fig 
 
+
 # --------------------------------------------------------------------------------------------
-def plot_cmx(df=None, chart_title='Correlation matrix', colorbar=False, to_return=False, width=720, height=360):
+def plot_scatter(df=None, chart_title='Returns-Volatility Plot', legend=False, to_return=False, width=720, height=360):
+    if df is None: 
+        return _plot_none(chart_title=chart_title, width=width, height=height)
+    
+    else:
+        fig = ''
+
+        # Show or return the plot
+        if to_return==False:
+            fig.show()
+        
+        else:
+            return fig 
+
+# --------------------------------------------------------------------------------------------
+def plot_cmx(df=None, chart_title='Correlation matrix', colorbar=False, to_return=False, width=720, height=360, show_dates=True):
 
     if df is None: 
         return _plot_none(chart_title=chart_title, width=width, height=height)
     
     else:
         # This will hide the upper triangle of the table
-        cor = df.corr()
+        
+        ret = df.pct_change().dropna()
+        cor = ret.corr()
         cor = cor.mask(_np.tril(cor.values,-1)==0)
         cor = cor.dropna(how='all').dropna(how='all',axis=1)
+
+        if show_dates:
+            try:
+                date1 = _datetime.strftime(ret.index[0], '%Y-%m-%d')
+                date2 = _datetime.strftime(ret.index[-1], '%Y-%m-%d')
+                chart_title = chart_title + ': ' + str(date1)[:10] + ' - ' + str(date2)[:10]
+                
+            except: ''
         
         fig = _ff.create_annotated_heatmap(cor.values.round(2),
                                     x=list(cor.columns),y=list(cor.index),reversescale=True,

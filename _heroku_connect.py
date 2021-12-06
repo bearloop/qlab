@@ -4,7 +4,7 @@ import requests as _requests
 from ._ft_market_data import ft_aggregate, ft_summary, ft_sectors, ft_securities
 from ._sql_statements import *
 from ._utilities import _convert_df_to_str, _convert_str_to_df
- 
+
 class HerokuDB:
     
     def __init__(self, uri):
@@ -160,11 +160,43 @@ class HerokuDB:
                              data=tuple(funds_data.loc[etf].astype(str)) )
         
     # --------------------------------------------------------------------------------------------
-    def prices_table_update(self, df):
+    def prices_table_update_auto_all(self, period='P1M', dg=None):
+        """ """
+
+        # Retrieve vwd ids / symbols from securities tables
+        self.execute_sql("SELECT vwd_id, symbol FROM securities WHERE product_type = 'ETF' ")
+        
+        # Pass the ids / symbols to get price time series
+        data = dg.comp_series(securities=dg.securities_dict(self.fetch()),
+                           ts_type='price',
+                           date_range={'auto':period})
+        
+        # Update the prices table using the prices data from degiro
+        self.prices_table_update_manual(df=data.copy())
+
+    
+    # --------------------------------------------------------------------------------------------
+    def prices_table_update_manual(self, df):
         """ """
         for asset in df.columns:
-            prices_as_string = _convert_df_to_str(df, column=asset)
+
+            # First read existing data:
+            try:
+                # if asset is in table you'll be able to read
+                existing_data = self.prices_table_read(assets_list=[asset])
+            except:
+                # Otherwise pass an empty df back
+                existing_data = _pd.DataFrame()
+
+            # Then use combine_first to upsert data to existing df
+            df_combined = _pd.DataFrame(df[asset]).combine_first(existing_data)
+
+            # ..and convert the combined df to string
+            prices_as_string = _convert_df_to_str(df_combined, column=asset)
+
+            # Finally save the string to the table
             self.execute_sql(query = sql_prices_insert_query, data=(asset, prices_as_string))
+    
     
     # --------------------------------------------------------------------------------------------
     def prices_table_read(self, assets_list=None):
@@ -176,7 +208,10 @@ class HerokuDB:
 
             else:
                 # Use the passed list to filter the prices table
-                query = "SELECT * FROM prices WHERE symbol IN {}".format(tuple(assets_list))
+                if len(assets_list) == 1:
+                    query = "SELECT * FROM prices WHERE symbol = '{}'".format(assets_list[0])
+                else:
+                    query = "SELECT * FROM prices WHERE symbol IN {}".format(tuple(assets_list))
             
             # Fetch data and create a data frame
             self.execute_sql(query=query)
