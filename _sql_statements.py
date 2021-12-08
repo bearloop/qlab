@@ -5,6 +5,16 @@ sql_prices_table_create = """
                               data text NOT NULL)
                            """
 
+sql_transactions_table_create = """
+                                CREATE TABLE IF NOT EXISTS transactions(
+                                   id integer NOT NULL PRIMARY KEY,
+                                   symbol varchar NOT NULL,
+                                   transaction_price numeric NOT NULL,
+                                   transaction_quantity integer NOT NULL,
+                                   transaction_type varchar NOT NULL,
+                                   transaction_date varchar NOT NULL)
+                                """
+
 sql_securities_table_create = """
                           CREATE TABLE IF NOT EXISTS securities(
                               dg_id varchar NOT NULL PRIMARY KEY,
@@ -67,6 +77,8 @@ sql_etfs_data_table_create = """
 # DROP TABLES
 sql_prices_table_drop = """DROP TABLE IF EXISTS prices"""
 
+sql_transactions_table_drop = """DROP TABLE IF EXISTS transactions"""
+
 sql_securities_table_drop = """DROP TABLE IF EXISTS securities"""
 
 sql_exchanges_table_drop = """DROP TABLE IF EXISTS exchanges"""
@@ -86,6 +98,23 @@ sql_prices_insert_query = """
                              VALUES (%s, %s)
                              ON CONFLICT (symbol)
                                  DO UPDATE SET data = EXCLUDED.data
+                        """
+
+sql_transactions_insert_query = """
+                        INSERT INTO transactions (
+                                 id,
+                                 symbol,
+                                 transaction_price,
+                                 transaction_quantity,
+                                 transaction_type,
+                                 transaction_date)
+                                 VALUES (%s, %s, %s, %s, %s, %s)
+                                 ON CONFLICT (id)
+                                     DO UPDATE SET symbol = EXCLUDED.symbol,
+                                                   transaction_price = EXCLUDED.transaction_price,
+                                                   transaction_quantity = EXCLUDED.transaction_quantity,
+                                                   transaction_type = EXCLUDED.transaction_quantity,
+                                                   transaction_date = EXCLUDED.transaction_date
                         """
 
 sql_security_insert_query = """
@@ -183,6 +212,10 @@ sql_etfs_data_insert_query = """
 # DELETE RECORDS
 sql_prices_delete_query = """
                            DELETE FROM prices WHERE symbol = %s
+                           """
+
+sql_transactions_delete_query = """
+                           DELETE FROM transactions WHERE id = %s
                            """
 
 sql_ft_exchange_delete_query = """

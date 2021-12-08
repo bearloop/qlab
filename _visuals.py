@@ -180,7 +180,6 @@ def plot_hist(df=None, chart_title='Returns KDE', legend=False, to_return=False,
         else:
             return fig 
 
-
 # --------------------------------------------------------------------------------------------
 def plot_scatter(df=None, chart_title='Returns-Volatility Plot', legend=False, to_return=False, width=720, height=360):
     if df is None: 
