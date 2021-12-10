@@ -5,6 +5,7 @@ from ._ft_market_data import ft_aggregate, ft_summary, ft_sectors, ft_securities
 from ._sql_statements import *
 from ._utilities import _convert_df_to_str, _convert_str_to_df
 
+
 class HerokuDB:
     
     def __init__(self, uri):
@@ -229,3 +230,7 @@ class HerokuDB:
             return results
         except Exception as e:
             print(e.args)
+    
+    
+    # --------------------------------------------------------------------------------------------
+    
