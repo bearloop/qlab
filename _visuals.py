@@ -5,7 +5,7 @@ from datetime import datetime as _datetime
 import plotly.figure_factory as _ff
 from datetime import timedelta as _timedelta
 import plotly.express as _px
-from ._utilities import _calc_expected_shortfall, _calc_expected_shortfall_v2
+from ._utilities import _calc_expected_shortfall
 
 _cool_colors = ["#001219","#005f73","#0a9396","#94d2bd","#e9d8a6",
                "#ee9b00","#ca6702","#bb3e03","#ae2012","#9b2226"]

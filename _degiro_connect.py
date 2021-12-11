@@ -11,8 +11,9 @@ class DeGiro():
         self._BASE_TRADER_URL = 'https://trader.degiro.nl'
         self._CONFIG_URL = self._BASE_TRADER_URL + '/login/secure/config'
         self._LOGIN_URL = self._BASE_TRADER_URL+'/login/secure/login'
+        self._SRCH_URL = 'v5/products/lookup?intAccount='
         self.credentials = None
-        self.shortcuts = ['ALL', 'YTD', 'P1D', 'P1W', 'P1M', 'P3M', 'P6M', 'P1Y', 'P3Y', 'P5Y', 'P50Y']
+        self.shortcuts = ['YTD', 'P1D', 'P1W', 'P1M', 'P3M', 'P6M', 'P1Y', 'P3Y', 'P5Y', 'P50Y']
 
     # --------------------------------------------------------------------------------------------------------------
     def login(self):
@@ -100,7 +101,7 @@ class DeGiro():
             print('Session id fetch failed')
     
     # --------------------------------------------------------------------------------------------------------------
-    def securities_dict(self, df, assets=None):
+    def _securities_dict(self, df, assets=None):
         '''
         Returns a list of dictionaries from a two-column dataframe. They keys of each dictionary are the values of
         the first column and its values are the values of the second column.
@@ -207,3 +208,25 @@ class DeGiro():
         return ts
     
     # --------------------------------------------------------------------------------------------------------------
+    def search_degiro(self, searchTerm, search_limit=30, product_type='All'):
+    
+        try:
+            product_search_url = self.credentials['product_search_url']+self._SRCH_URL
+            account = self.credentials['account_id']
+            secID = self.credentials['session_id']
+            search_url_base = product_search_url+account+'&sessionId='+secID
+
+            if product_type == 'All':
+                search_url = search_url_base+'&limit='+str(search_limit)+'&searchText='+searchTerm
+
+            else:
+                product_mapping = {'ETFs':'131','Stocks':'1'}
+            
+                search_url = search_url_base+'&productTypeId='+product_mapping[product_type]+\
+                            '&limit='+str(search_limit)+'&searchText='+searchTerm
+
+            search_results = _requests.get(search_url)
+            return _json.loads(search_results.content)
+            
+        except Exception as e:
+            print('Product search failed - ', e.args)

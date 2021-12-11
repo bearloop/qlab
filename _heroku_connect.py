@@ -161,21 +161,36 @@ class HerokuDB:
                              data=tuple(funds_data.loc[etf].astype(str)) )
         
     # --------------------------------------------------------------------------------------------
-    def prices_table_update_auto_all(self, period='P1M', dg=None):
-        """ """
+    def prices_table_update_auto(self, period='P1M', dg=None, assets_list=None):
+        """
+        Retrieves time series data and adds them to the prices table. If there is an assets list, only these assets are updated.
+        """
 
-        # Retrieve vwd ids / symbols from securities tables
-        self.execute_sql("SELECT vwd_id, symbol FROM securities WHERE product_type = 'ETF' ")
+        if assets_list is None:
+            # Retrieve vwd ids / symbols from securities tables
+            self.execute_sql("SELECT vwd_id, symbol FROM securities WHERE product_type = 'ETF' ")
+            
+            # Pass the ids / symbols to get price time series
+            data = dg.comp_series(securities=dg._securities_dict(self.fetch()),
+                            ts_type='price',
+                            date_range={'auto':period})
+            
+            # Update the prices table using the prices data from degiro
+            self.prices_table_update_manual(df=data.copy())
         
-        # Pass the ids / symbols to get price time series
-        data = dg.comp_series(securities=dg.securities_dict(self.fetch()),
-                           ts_type='price',
-                           date_range={'auto':period})
-        
-        # Update the prices table using the prices data from degiro
-        self.prices_table_update_manual(df=data.copy())
+        else:
+            for asset in assets_list:
+                # Retrieve vwd ids / symbols from securities tables
+                self.execute_sql("SELECT vwd_id, symbol FROM securities WHERE symbol = '{}' ".format(asset))
 
-    
+                # Pass the ids / symbols to get price time series
+                data = dg.comp_series(securities=dg._securities_dict(self.fetch()),
+                                ts_type='price',
+                                date_range={'auto':period})
+                
+                # Update the prices table using the prices data from degiro
+                self.prices_table_update_manual(df=data.copy())
+
     # --------------------------------------------------------------------------------------------
     def prices_table_update_manual(self, df):
         """ """
