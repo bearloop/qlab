@@ -1,7 +1,6 @@
 import pandas as _pd
 import numpy as _np
 import json as _json
-import pandas as _pd
 
 # --------------------------------------------------------------------------------------------
 def _convert_str_to_df(string, column):
@@ -96,3 +95,49 @@ def utils_returns_calc(df):
     return df.T
 
 # --------------------------------------------------------------------------------------------
+def _calc_expected_shortfall(df, window, conf):
+    """ Applied to pandas df with a single column """
+
+    # Calculate returns
+    ret = df.pct_change()
+    
+    # Calculate VaR
+    var = ret.rolling(window=window, min_periods=window).quantile(1-conf)
+    
+    # Create list to add ES values to
+    shortfall_series = []
+    
+    for period in ret.rolling(window, window):
+        
+        # Find current VaR value of the period
+        var_value = var.loc[period.index][-1]
+        
+        # Calculate expected shortfall (mean of values less than the VaR)
+        es = period[period<var_value].mean()
+        
+        # Append to list
+        shortfall_series.append(es)
+    
+    # Create pd series to return
+    pds = _pd.Series(shortfall_series, index = ret.index)
+    
+    return  pds
+
+# def _calc_expected_shortfall_v2(df, window, conf):
+#     """ Applied to pandas df with a single column """
+#     # Calculate returns
+#     ret = df.pct_change()
+    
+#     # Calculate VaR
+#     var = ret.rolling(window=window, min_periods=window).quantile(1-conf)
+    
+#     ct = _pd.concat([ret,var],axis=1)
+
+#     ct.columns = ['RET','VAR']
+    
+#     es_series = list(map(lambda x: x.RET[x.RET<x.VAR.loc[x.index[-1]]].mean(),
+#                                   ct.rolling(window=window,min_periods=window)))
+    
+#     es_sr = _pd.Series(es_series, index = ret.index)
+    
+#     return es_sr

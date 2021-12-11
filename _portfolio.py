@@ -63,22 +63,21 @@ class Portfolio:
 
     # --------------------------------------------------------------------------------------------
 
-    # def _fetch_asset_prices(self, all_transactions, start_date):
+    def _fetch_transactions_and_groupings(self):
 
-    #         # Portfolio assets by date
-    #         all_assets = 
-    #         ap = all_assets.loc[start_date:].dropna(how='all',axis=1).ffill()
+            # Fetch transactions
+            transactions = self.fetch_transactions()
+            t_0 = min(transactions['transaction_date']) - _timedelta(1)
+
+            # Group transactions by date and asset to get mean price and total shares traded
+            groupings = transactions.groupby(['symbol','transaction_date'])
             
-    #         return ap
+            return transactions, groupings, t_0
 
     # --------------------------------------------------------------------------------------------
     def fetch_data(self):
-        # Fetch transactions
-        transactions = self.fetch_transactions()
-        t_0 = min(transactions['transaction_date']) - _timedelta(1)
 
-        # Group transactions by date and asset to get mean price and total shares traded
-        groupings = transactions.groupby(['symbol','transaction_date'])
+        transactions, groupings, t_0 = self._fetch_transactions_and_groupings()
 
         # Shares quantity and price per share
         nos = groupings['transaction_quantity'].sum().unstack().T
@@ -100,3 +99,22 @@ class Portfolio:
         return port_returns
 
     # --------------------------------------------------------------------------------------------
+
+    def fetch_weights(self):
+
+        transactions, groupings, t_0 = self._fetch_transactions_and_groupings()
+
+        # Shares quantity
+        nos = groupings['transaction_quantity'].sum().unstack().T
+
+        # Asset prices
+        ap = self.db.prices_table_read(assets_list=list(set(transactions['symbol']))
+                                    ).loc[t_0:].dropna(how='all',axis=1).ffill()
+
+        # Valuation per holding
+        vph = (nos.reindex(ap.index).cumsum().ffill()).mul(ap).ffill()
+
+        # Allocation (weight) per holding
+        weights = vph.div(vph.sum(axis=1),axis='rows')
+
+        return weights

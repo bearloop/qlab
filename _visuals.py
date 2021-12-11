@@ -5,16 +5,17 @@ from datetime import datetime as _datetime
 import plotly.figure_factory as _ff
 from datetime import timedelta as _timedelta
 import plotly.express as _px
-
+from ._utilities import _calc_expected_shortfall, _calc_expected_shortfall_v2
 
 _cool_colors = ["#001219","#005f73","#0a9396","#94d2bd","#e9d8a6",
                "#ee9b00","#ca6702","#bb3e03","#ae2012","#9b2226"]
 
 _cmx_colors = ["#e39774","#e5e5e5","#5c9ead"]
 
-_chart_format_dict = {'Percent':["Date: %{x|%Y-%m-%d}<br>Value: %{y:.1%}", ".0%"       ],
-                      'Value':  ["Date: %{x|%Y-%m-%d}<br>Value: %{y}",     ".1f"       ],
-                      'Density':["Return: %{x}<br>Count: %{y}",            ".0f", ".1%"]}
+_chart_format_dict = {'Percent':   ["Date: %{x|%Y-%m-%d}<br>Value: %{y:.1%}",  ".0%"       ],
+                      'Value':     ["Date: %{x|%Y-%m-%d}<br>Value: %{y}",      ".1f"       ],
+                      'Value_2f':  ["Date: %{x|%Y-%m-%d}<br>Value: %{y:.2f}",  ".2f"       ],
+                      'Density':   ["Return: %{x}<br>Count: %{y}",             ".0f", ".1%"]}
 
 _charts_template='simple_white'
 
@@ -126,6 +127,31 @@ def plot_var(df=None, window=21, forward=21, conf=0.95, chart_title='Historical 
             return fig  
 
 # --------------------------------------------------------------------------------------------
+def plot_esfall(df=None, window=21, conf=0.95, chart_title='Expected Shortfall (E(Rt)<VaR)', legend=False, to_return=False, width=720, height=360):
+    """
+    Plots Historical Exp. Shortfall. Not an annualized metric, just looks at the past N periods and says this is the average of returns below VaR over this date range.
+    """
+    if df is None:
+        return _plot_none(chart_title=chart_title, width=width, height=height)
+    
+    else:
+        # Calculate Expected Shortfall for all assets
+        es = _pd.DataFrame(df).apply(lambda x: _calc_expected_shortfall(x,window=window,conf=conf))
+
+        hover = _chart_format_dict['Percent'][0]
+        yformat = _chart_format_dict['Percent'][1]
+
+        fig = _template_line(es, chart_title=chart_title, legend=legend, width=width, height=height, template=_charts_template
+                ).update_traces(hovertemplate=hover).update_yaxes(tickformat=yformat)
+
+        # Show or return the plot
+        if to_return==False:
+            fig.show()
+        
+        else:
+            return fig  
+
+# --------------------------------------------------------------------------------------------
 def plot_correl(df=None, window=21, base=None, chart_title='Correlation', legend=False, to_return=False, width=720, height=360):
     """
     Plots the correlation of the base asset and every other asset on a rolling basis over the window period.
@@ -137,8 +163,8 @@ def plot_correl(df=None, window=21, base=None, chart_title='Correlation', legend
         # Calculate correlation for base vs all other assets and then remove the base asset col
         cor = df.pct_change().rolling(window).corr()[base].unstack().drop([base],axis=1)
 
-        hover = _chart_format_dict['Value'][0]
-        yformat = _chart_format_dict['Value'][1]
+        hover = _chart_format_dict['Value_2f'][0]
+        yformat = _chart_format_dict['Value_2f'][1]
 
         chart_title = chart_title + ' vs '+base
         fig = _template_line(cor, chart_title=chart_title, legend=legend, width=width, height=height, template=_charts_template
@@ -249,7 +275,6 @@ def _plot_none(chart_title=None, width=720, height=360):
     df.loc[_date.today(), "data"] = 0 #.strftime("%d-%m-%Y")
     return _template_line(df, chart_title=chart_title, width=width, height=height, template=_charts_template)
 
-
 # --------------------------------------------------------------------------------------------
 def _template_line(df=None, chart_title=None, legend=False, width=720, height=360, template=_charts_template):
     """ """
@@ -264,7 +289,6 @@ def _template_line(df=None, chart_title=None, legend=False, width=720, height=36
     fig = _add_space(df, fig)
         
     return fig
-
 
 # --------------------------------------------------------------------------------------------
 def _time_layout(fig, title, legend, width, height):
