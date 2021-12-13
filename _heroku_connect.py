@@ -61,7 +61,7 @@ class HerokuDB:
             print(e.args)
             
     # --------------------------------------------------------------------------------------------
-    def clean_dgiro_dict(self, search_results):
+    def clean_degiro_search(self, search_results):
         """
         Return a cleaned dictionary.
         """
@@ -213,7 +213,6 @@ class HerokuDB:
             # Finally save the string to the table
             self.execute_sql(query = sql_prices_insert_query, data=(asset, prices_as_string))
     
-    
     # --------------------------------------------------------------------------------------------
     def prices_table_read(self, assets_list=None):
         """ """
@@ -245,7 +244,6 @@ class HerokuDB:
             return results
         except Exception as e:
             print(e.args)
-    
-    
+      
     # --------------------------------------------------------------------------------------------
     
