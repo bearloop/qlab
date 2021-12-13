@@ -108,7 +108,8 @@ class HerokuDB:
             self.execute_sql(query=sql_print_tables_query,data=None)
             
             for table in self._cur.fetchall():
-                print('Table: ', table[0])
+                self.execute_sql("""SELECT COUNT(*) FROM {}""".format(table[0]))
+                print('Table: ', table[0], '--- rows:', str(self.fetch().iloc[0][0]))
         
         except Exception as e:
             print(e.args)
