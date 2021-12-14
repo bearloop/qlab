@@ -247,4 +247,23 @@ class HerokuDB:
             print(e.args)
       
     # --------------------------------------------------------------------------------------------
+    def insert_new_asset(self, dg_search_result=None, asset=None, asset_segment=None, ft_suffix=None, dg=None):
+        """Provide all 5 arguments to call this functions"""
+        if all(i is not None for i in [dg_search_result, asset, asset_segment, ft_suffix, dg]):
+            
+            # Insert new security to <<securities>> table
+            self.execute_sql(sql_security_insert_query,
+                             self.clean_degiro_search(dg_search_result))
+
+            # Insert segment for new security to <<market_segments>> table
+            self.execute_sql(sql_market_segments_insert_query,(asset,asset_segment))
+
+            # Insert price time series data to <<prices>> table
+            self.prices_table_update_auto(period='P50Y',dg=dg, assets_list=[asset])
+
+            # Scrap FT data and add to <<etfs_data>> table
+            self.load_ft_funds_data(etfs_list=[asset+':'+ft_suffix])
+
+        else:
+            print('Insert every argument to proceed.')
     

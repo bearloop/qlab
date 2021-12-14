@@ -21,7 +21,7 @@ _charts_template='simple_white'
 
 
 # --------------------------------------------------------------------------------------------
-def plot_line(df=None, rebase=False, chart_title='Historical Performance', legend=False, to_return=False, width=720, height=360):
+def plot_line(df=None, rebase=False, chart_title='Historical Performance', legend=True, to_return=False, width=720, height=360):
     """
     Plots asset prices time series.
     """
@@ -55,7 +55,7 @@ def plot_line(df=None, rebase=False, chart_title='Historical Performance', legen
             return fig  
 
 # --------------------------------------------------------------------------------------------
-def plot_vol(df=None, window=21, freq=252, chart_title='Historical Volatility', legend=False, to_return=False, width=720, height=360):
+def plot_vol(df=None, window=21, freq=252, chart_title='Historical Volatility', legend=True, to_return=False, width=720, height=360):
     """
     Plots annualized volatility over the passed window.
     """
@@ -78,7 +78,7 @@ def plot_vol(df=None, window=21, freq=252, chart_title='Historical Volatility', 
             return fig
 
 # --------------------------------------------------------------------------------------------
-def plot_ddown(df=None, chart_title='Drawdown', legend=False, to_return=False, width=720, height=360):
+def plot_ddown(df=None, chart_title='Drawdown', legend=True, to_return=False, width=720, height=360):
     """
     Plots price drawdown given the max price of the period in the dataframe.
     """
@@ -104,7 +104,7 @@ def plot_ddown(df=None, chart_title='Drawdown', legend=False, to_return=False, w
             return fig
 
 # --------------------------------------------------------------------------------------------
-def plot_var(df=None, window=21, forward=21, conf=0.95, chart_title='Historical VaR', legend=False, to_return=False, width=720, height=360):
+def plot_var(df=None, window=21, forward=21, conf=0.95, chart_title='Historical VaR', legend=True, to_return=False, width=720, height=360):
     """
     Plots the forward-N periods (e.g. 21-days) value at risk based on the window's hist distribution.
     """
@@ -127,7 +127,7 @@ def plot_var(df=None, window=21, forward=21, conf=0.95, chart_title='Historical 
             return fig  
 
 # --------------------------------------------------------------------------------------------
-def plot_esfall(df=None, window=21, conf=0.95, chart_title='Expected Shortfall (E(Rt)<VaR)', legend=False, to_return=False, width=720, height=360):
+def plot_esfall(df=None, window=21, conf=0.95, chart_title='Expected Shortfall (E(Rt)<VaR)', legend=True, to_return=False, width=720, height=360):
     """
     Plots Historical Exp. Shortfall. Not an annualized metric, just looks at the past N periods and says this is the average of returns below VaR over this date range.
     """
@@ -152,7 +152,7 @@ def plot_esfall(df=None, window=21, conf=0.95, chart_title='Expected Shortfall (
             return fig  
 
 # --------------------------------------------------------------------------------------------
-def plot_correl(df=None, window=21, base=None, chart_title='Correlation', legend=False, to_return=False, width=720, height=360):
+def plot_correl(df=None, window=21, base=None, chart_title='Correlation', legend=True, to_return=False, width=720, height=360):
     """
     Plots the correlation of the base asset and every other asset on a rolling basis over the window period.
     """
@@ -178,7 +178,7 @@ def plot_correl(df=None, window=21, base=None, chart_title='Correlation', legend
             return fig  
 
 # --------------------------------------------------------------------------------------------
-def plot_hist(df=None, chart_title='Returns KDE', legend=False, to_return=False, width=720, height=360):
+def plot_hist(df=None, chart_title='Returns KDE', legend=True, to_return=False, width=720, height=360):
     
     if df is None: 
         return _plot_none(chart_title=chart_title, width=width, height=height)
@@ -207,7 +207,7 @@ def plot_hist(df=None, chart_title='Returns KDE', legend=False, to_return=False,
             return fig 
 
 # --------------------------------------------------------------------------------------------
-def plot_scatter(df=None, chart_title='Returns-Volatility Plot', legend=False, to_return=False, width=720, height=360):
+def plot_scatter(df=None, chart_title='Returns-Volatility Plot', legend=True, to_return=False, width=720, height=360):
     if df is None: 
         return _plot_none(chart_title=chart_title, width=width, height=height)
     
@@ -265,6 +265,62 @@ def plot_cmx(df=None, chart_title='Correlation matrix', colorbar=False, to_retur
         else:
             return fig 
 
+
+# --------------------------------------------------------------------------------------------
+def plot_alloc_hist(df=None, chart_title='Portfolio Historical Allocation', legend=True, to_return=False, width=720, height=360):
+    """
+    """
+    if df is None: 
+        return _plot_none(chart_title=chart_title, width=width, height=height)
+    
+    else:
+        yformat = _chart_format_dict['Percent'][1]
+
+        fig = _px.area(df, template = _charts_template, color_discrete_sequence=_cool_colors)
+
+        fig = fig.update_traces(line_width=0.0,
+                                hovertemplate="Date: %{x|%Y-%m-%d}<br>Weight: %{y:0.3%}"
+                                ).update_yaxes(tickformat=yformat).update_layout(yaxis_range=(0, 1))
+        
+        fig = _time_layout(fig, title=chart_title, legend=legend, width=width, height=height)
+        fig = _add_space(df, fig)
+
+        # Show or return the plot
+        if to_return==False:
+            fig.show()
+        
+        else:
+            return fig 
+
+# --------------------------------------------------------------------------------------------
+def plot_alloc(df=None, chart_title='Portfolio Allocation', to_return=False, width=720, height=360):
+    """
+    Expects a pandas DataFrame with a single column, where the index holds the asset names.
+    """
+    if df is None: 
+        return _plot_none(chart_title=chart_title, width=width, height=height)
+    
+    else:
+        fig = _px.pie(df, values=df.columns[0], names=df.index, template=_charts_template, hole=0.3,
+                     color_discrete_sequence=_cool_colors)
+
+        fig = fig.update_traces(textposition='inside', textinfo='percent+label', pull=0.015,
+                                hovertemplate="Asset: %{label}<br>Weight: %{percent:0.2%}")
+
+        fig = fig.update_layout(width = width, height = height,
+                                font = dict(color="#505050", size=12, family='sans-serif'),
+                                showlegend = True, legend_title=None, legend_x=0.85,
+                                title={'text':chart_title,
+                                       'xref':'paper', 'x':1, 'xanchor': 'right', 
+                                       'font':{'size':15, 'family':'sans-serif'}})
+
+        # Show or return the plot
+        if to_return==False:
+            fig.show()
+        
+        else:
+            return fig 
+
 # --------------------------------------------------------------------------------------------
 def _plot_none(chart_title=None, width=720, height=360):
     """
@@ -276,7 +332,7 @@ def _plot_none(chart_title=None, width=720, height=360):
     return _template_line(df, chart_title=chart_title, width=width, height=height, template=_charts_template)
 
 # --------------------------------------------------------------------------------------------
-def _template_line(df=None, chart_title=None, legend=False, width=720, height=360, template=_charts_template):
+def _template_line(df=None, chart_title=None, legend=True, width=720, height=360, template=_charts_template):
     """ """
     
     # Make the line plot
