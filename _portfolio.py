@@ -40,7 +40,7 @@ class Portfolio:
 
         # Step 4 Calculate returns and cumulative returns (1+r_1)*(1+r_2)*..*(1+r_n)
         df['Return'] = df['Numerator'] / df['Denominator']
-        df['Cumulative_Index'] = (df['Return']+1).cumprod().fillna(1)
+        df['PORT'] = (df['Return']+1).cumprod().fillna(1)
         
         return df
 
@@ -100,7 +100,7 @@ class Portfolio:
 
     # --------------------------------------------------------------------------------------------
 
-    def fetch_weights(self):
+    def fetch_weights_history(self):
 
         transactions, groupings, t_0 = self._fetch_transactions_and_groupings()
 
@@ -118,3 +118,16 @@ class Portfolio:
         weights = vph.div(vph.sum(axis=1),axis='rows')
 
         return weights
+
+    
+    # --------------------------------------------------------------------------------------------
+
+    def fetch_weights_last(self):
+
+        df = self.fetch_weights_history()
+        wei = _pd.DataFrame(df.iloc[-1]).T
+        wei = wei[wei>0].dropna(axis=1).T
+
+        return wei
+    
+    # --------------------------------------------------------------------------------------------

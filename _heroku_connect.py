@@ -4,7 +4,7 @@ import requests as _requests
 from ._ft_market_data import ft_aggregate, ft_summary, ft_sectors, ft_securities
 from ._sql_statements import *
 from ._utilities import _convert_df_to_str, _convert_str_to_df
-
+from ._portfolio import Portfolio
 
 class HerokuDB:
     
@@ -267,3 +267,17 @@ class HerokuDB:
         else:
             print('Insert every argument to proceed.')
     
+    # --------------------------------------------------------------------------------------------
+    def market_segments_info(self):
+
+        self.execute_sql("""SELECT securities.symbol, name, segment
+                            FROM securities
+                            JOIN market_segments
+                            ON securities.symbol=market_segments.symbol""")
+        ms = self.fetch()
+        ms.index = ms.symbol
+        ms.loc['PORT',:] = ['PORT','Portfolio','Portfolio']
+
+        return ms
+    
+    # --------------------------------------------------------------------------------------------

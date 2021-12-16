@@ -308,8 +308,8 @@ def plot_alloc(df=None, chart_title='Portfolio Allocation', to_return=False, wid
                                 hovertemplate="Asset: %{label}<br>Weight: %{percent:0.2%}")
 
         fig = fig.update_layout(width = width, height = height,
-                                font = dict(color="#505050", size=12, family='sans-serif'),
-                                showlegend = True, legend_title=None, legend_x=0.85,
+                                font = dict(color="#505050", size=10, family='sans-serif'),
+                                showlegend = True, legend_title='Assets:', legend_x=0.85,
                                 title={'text':chart_title,
                                        'xref':'paper', 'x':1, 'xanchor': 'right', 
                                        'font':{'size':15, 'family':'sans-serif'}})
@@ -321,6 +321,58 @@ def plot_alloc(df=None, chart_title='Portfolio Allocation', to_return=False, wid
         else:
             return fig 
 
+
+# --------------------------------------------------------------------------------------------
+def plot_treemap(df, sort_by='1-yr', chart_title='Performance', midpoint=0, colorbar=False, 
+                                      reverse=False, to_return=False, width=920, height=640):
+    """
+    Plots a treemap for performance or volatility (whichever the dataframe includes).
+    Expects 3 descriptive columns: symbol, name, segment, and as many period columns as apply.
+    sort_by: 1-yr, 1-mo YtD etc
+    midpoint: 0 or None
+    colorbar, reverse, to_return: boolean
+    """
+    if df is None: 
+        return _plot_none(chart_title=chart_title, width=width, height=height)
+    
+    else:
+        # Full name
+        name = "<br>%{customdata[0]}"
+        
+        # Data frame columns except symbol, name and segment
+        cols = [i for i in df.columns if i not in ['symbol','name','segment']]
+        
+        # Map periods to customdata values 
+        dd = {}
+        for ind, per in enumerate(cols): dd[per] = ["<br>"+per+": ","%{customdata["+str(ind+1)+"]:.2%}"]
+        
+        # Construct hover template by flattening the dictionary values
+        hover = "%{parent} - %{label}"+name+'<br>'+chart_title+':'+\
+                        ''.join([str(k) for elem in dd for k in dd[elem]])
+        
+        # Configure colors order
+        if reverse: colors = _cmx_colors[::-1]
+        else: colors = _cmx_colors
+
+        # Treemap figure
+        frame = 'Assets Monitor: '+chart_title+ ' - '+sort_by
+        fig = _px.treemap(df,
+                    color=sort_by,hover_data=['name']+list(dd.keys()),
+                    color_continuous_scale=colors,
+                    color_continuous_midpoint=midpoint,
+                    path=[_px.Constant(frame),'segment','symbol'],
+                    width=width,height=height)
+        
+        # Configure hover and text templates
+        fig.data[0].texttemplate = "%{label}<br>"+dd[sort_by][1]
+        fig = fig.update_layout(coloraxis_showscale=colorbar).update_traces(hovertemplate=hover)
+        
+        # Show or return the plot
+        if to_return==False:
+            fig.show()
+        
+        else:
+            return fig 
 # --------------------------------------------------------------------------------------------
 def _plot_none(chart_title=None, width=720, height=360):
     """
@@ -358,9 +410,9 @@ def _time_layout(fig, title, legend, width, height):
 
     fig = fig.update_layout(
             font = dict(color="#505050", size=10, family='sans-serif'),
-            xaxis = {"gridcolor": "#E1E5ED"},
-            yaxis = {"gridcolor": "#E1E5ED"},
-            plot_bgcolor='white',
+            # xaxis = {"gridcolor": "#E1E5ED"},
+            # yaxis = {"gridcolor": "#E1E5ED"},
+            # plot_bgcolor='white',
             showlegend = legend, legend_title='Assets:',
             autosize=False,
             width = width, height = height,

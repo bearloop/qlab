@@ -141,3 +141,89 @@ def _calc_expected_shortfall(df, window, conf):
 #     es_sr = _pd.Series(es_series, index = ret.index)
     
 #     return es_sr
+
+# --------------------------------------------------------------------------------------------
+def _calc_ytd(df):
+    
+    # Forward fill
+    df = df.ffill()
+    
+    years = sorted((set(df.index.year)),reverse=False)
+    
+    if len(years) == 1:
+        
+        start_date = list(df.index)[0]
+        end_date = list(df.index)[-1]
+        return df.loc[[start_date,end_date]]
+    
+    else:
+        
+        current_year = str(years[-1])
+        current_year_date = df.loc[current_year].iloc[-1].name
+    
+        previous_year = str(years[-2])
+        previous_year_date = df.loc[previous_year].iloc[-1].name
+
+        return df.loc[[previous_year_date,current_year_date]]
+
+# --------------------------------------------------------------------------------------------
+def _calc_mtd(df):
+    
+    # Forward fill
+    df = df.ffill()
+    
+    current_month = df.index.month[-1]
+    
+    if  current_month == 1:
+        return _calc_ytd(df)
+    
+    else:
+        
+        previous_month = str(current_month-1)
+        current_year = str(sorted((set(df.index.year)),reverse=False)[-1])
+        
+        last_month_date = list(df.loc[current_year+'-'+previous_month].index)[-1]
+        current_month_date = list(df.index)[-1]
+        
+        return df.loc[[last_month_date, current_month_date]]
+
+# --------------------------------------------------------------------------------------------
+def calc_returns(df):
+    
+    days_in_month = 21
+    
+    # Forward fill prices
+    df = df.ffill()
+    
+    ret = _pd.DataFrame(df.pct_change().iloc[-1])
+    ret.columns = ['1-day']
+    
+    ret['1-wk'] = df.pct_change(5).iloc[-1]
+    ret['1-mo'] = df.pct_change(1*days_in_month).iloc[-1]
+    ret['3-mo'] = df.pct_change(3*days_in_month).iloc[-1]
+    ret['1-yr'] = df.pct_change(12*days_in_month).iloc[-1]
+    ret['MtD'] = _calc_mtd(df).pct_change().iloc[-1]
+    ret['YtD'] = _calc_ytd(df).pct_change().iloc[-1]
+    
+    return ret
+
+# --------------------------------------------------------------------------------------------
+def calc_volatility(df):
+    
+    days_in_month = 21
+    ann_rate = _np.sqrt(days_in_month*12)
+    
+    # Forward fill prices
+    df = df.ffill()
+    
+    vol = _pd.DataFrame(df.pct_change().iloc[-1*days_in_month:].std()*ann_rate)
+    vol.columns = ['1-mo']
+    
+    vol['3-mo'] = df.pct_change().iloc[-3*days_in_month:].std()*ann_rate
+    vol['1-yr'] = df.pct_change().iloc[-12*days_in_month:].std()*ann_rate
+    
+    vol['YtD'] = df.pct_change().loc[_calc_ytd(df).index[0]:].std()*ann_rate
+    
+    return vol
+
+# --------------------------------------------------------------------------------------------
