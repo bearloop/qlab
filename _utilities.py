@@ -188,8 +188,35 @@ def _calc_mtd(df):
         return df.loc[[last_month_date, current_month_date]]
 
 # --------------------------------------------------------------------------------------------
-def calc_returns(df):
-    
+def _calc_custom_range(df, start, end):
+    """
+    Calculates asset returns over the requested period. Assumes start, end dates are in the index.
+    df: Pandas DataFrame with dates in its index and asset prices as values
+    start, end: date as string in the following format 'YYYY-MM-DD' e.g. '2019-12-31'
+    """
+    if (start is not None) & (end is not None):
+        df = df.pct_change().loc[start:end].ffill().dropna(axis=1)
+        return df
+    else:
+        print('Please add both a start and an end date.')
+
+# --------------------------------------------------------------------------------------------
+def _concat_market_segments(df, db):
+    """Concat df with market segments stored in market_segments table."""
+    ms = db.market_segments_info()
+
+    df = _pd.concat([df,ms],axis=1)
+
+    return df
+
+# --------------------------------------------------------------------------------------------
+def calc_cumulative_ret(df, start=None, end=None, db=None):
+    """
+    Calculates cumulative returns over different lookback periods.
+    df: Pandas DataFrame with dates in its index and asset prices as values
+    start, end: date as string in the following format 'YYYY-MM-DD'
+    db: instance of PostgerSQL connection
+    """
     days_in_month = 21
     
     # Forward fill prices
@@ -204,12 +231,27 @@ def calc_returns(df):
     ret['1-yr'] = df.pct_change(12*days_in_month).iloc[-1]
     ret['MtD'] = _calc_mtd(df).pct_change().iloc[-1]
     ret['YtD'] = _calc_ytd(df).pct_change().iloc[-1]
-    
+
+    if (start is not None) & (end is not None):
+        custom = _calc_custom_range(df, start, end).add(1).cumprod()
+        ret['Custom'] = custom.iloc[[0,-1]].pct_change().iloc[-1]
+
+
+    if db is not None:
+        ret = _concat_market_segments(ret, db)
+        
     return ret
 
+
+
 # --------------------------------------------------------------------------------------------
-def calc_volatility(df):
-    
+def calc_annualised_vol(df, start=None, end=None, db=None):
+    """
+    Calculates annualised volatility over different lookback periods.
+    df: Pandas DataFrame with dates in its index and asset prices as values
+    start, end: date as string in the following format 'YYYY-MM-DD'
+    db: instance of PostgerSQL connection
+    """
     days_in_month = 21
     ann_rate = _np.sqrt(days_in_month*12)
     
@@ -221,9 +263,47 @@ def calc_volatility(df):
     
     vol['3-mo'] = df.pct_change().iloc[-3*days_in_month:].std()*ann_rate
     vol['1-yr'] = df.pct_change().iloc[-12*days_in_month:].std()*ann_rate
-    
+    vol['MtD'] = df.pct_change().loc[_calc_mtd(df).index[0]:].std()*ann_rate
     vol['YtD'] = df.pct_change().loc[_calc_ytd(df).index[0]:].std()*ann_rate
+
+    if (start is not None) & (end is not None):
+        vol['Custom'] = _calc_custom_range(df, start, end).std()*ann_rate
     
+    if db is not None:
+        vol = _concat_market_segments(vol, db)
+
     return vol
+
+# --------------------------------------------------------------------------------------------
+
+def calc_annualised_ret(df, start=None, end=None, db=None):
+    """
+    Calculates annualised mean returns over different lookback periods.
+    df: Pandas DataFrame with dates in its index and asset prices as values
+    start, end: date as string in the following format 'YYYY-MM-DD'
+    db: instance of PostgerSQL connection
+    """
+    days_in_month = 21
+    ann_rate = days_in_month*12
+    
+    # Forward fill prices
+    df = df.ffill()
+    
+    mu = _pd.DataFrame(df.pct_change().iloc[-1*days_in_month:].mean()*ann_rate)
+    mu.columns = ['1-mo']
+    
+    mu['3-mo'] = df.pct_change().iloc[-3*days_in_month:].mean()*ann_rate
+    mu['1-yr'] = df.pct_change().iloc[-12*days_in_month:].mean()*ann_rate
+    mu['MtD'] = df.pct_change().loc[_calc_mtd(df).index[0]:].mean()*ann_rate
+    mu['YtD'] = df.pct_change().loc[_calc_ytd(df).index[0]:].mean()*ann_rate
+
+    if (start is not None) & (end is not None):
+        mu['Custom'] = _calc_custom_range(df, start, end).mean()*ann_rate
+    
+    if db is not None:
+        mu = _concat_market_segments(mu, db)
+
+    return mu
+
 
 # --------------------------------------------------------------------------------------------

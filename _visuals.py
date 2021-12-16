@@ -207,7 +207,7 @@ def plot_hist(df=None, chart_title='Returns KDE', legend=True, to_return=False, 
             return fig 
 
 # --------------------------------------------------------------------------------------------
-def plot_scatter(df=None, chart_title='Returns-Volatility Plot', legend=True, to_return=False, width=720, height=360):
+def _plot_scatter(df=None, chart_title='Returns-Volatility Plot', legend=True, to_return=False, width=720, height=360):
     if df is None: 
         return _plot_none(chart_title=chart_title, width=width, height=height)
     
@@ -265,7 +265,6 @@ def plot_cmx(df=None, chart_title='Correlation matrix', colorbar=False, to_retur
         else:
             return fig 
 
-
 # --------------------------------------------------------------------------------------------
 def plot_alloc_hist(df=None, chart_title='Portfolio Historical Allocation', legend=True, to_return=False, width=720, height=360):
     """
@@ -321,7 +320,6 @@ def plot_alloc(df=None, chart_title='Portfolio Allocation', to_return=False, wid
         else:
             return fig 
 
-
 # --------------------------------------------------------------------------------------------
 def plot_treemap(df, sort_by='1-yr', chart_title='Performance', midpoint=0, colorbar=False, 
                                       reverse=False, to_return=False, width=920, height=640):
@@ -336,6 +334,9 @@ def plot_treemap(df, sort_by='1-yr', chart_title='Performance', midpoint=0, colo
         return _plot_none(chart_title=chart_title, width=width, height=height)
     
     else:
+        # Filter out rows for which the sort_by column is NaN
+        df = df[df[sort_by].notnull()]
+
         # Full name
         name = "<br>%{customdata[0]}"
         
@@ -373,6 +374,52 @@ def plot_treemap(df, sort_by='1-yr', chart_title='Performance', midpoint=0, colo
         
         else:
             return fig 
+
+# --------------------------------------------------------------------------------------------
+def plot_barchart(df, sort_by='1-yr', chart_title='Cum. Returns', legend=True, to_return=False, width=720, height=360):
+
+    if df is None: 
+        return _plot_none(chart_title=chart_title, width=width, height=height)
+    
+    else:
+        opacity = 0.8
+
+        # Filter data by the selected period
+        df = df[df[sort_by].notnull()]
+
+        # Plot bar chart
+        fig = _px.bar(df, x=df.index, y=df[sort_by], template=_charts_template,
+                     color='segment',  color_discrete_sequence=_cool_colors[1:], hover_data=['name','segment'])
+        
+        # Adjust tile if period is "custom"
+        if sort_by=='Custom':
+            title = chart_title + ' - custom date range'
+        else:
+            title = chart_title+': '+sort_by
+        
+        # Make further format / layout modifications with _text_layout
+        fig = _text_layout(fig=fig, title=title, legend=legend, width=width, height=height)
+        
+        # If there's portfolio data, draw a horizontal line
+        if 'PORT' in df[sort_by].index:
+            fig = fig.add_hline(y=df[sort_by].loc['PORT'], line_width=1.5, line_dash="dot", line_color="black", opacity=opacity)
+        
+        # Axis format
+        yformat = _chart_format_dict['Percent'][1]
+
+        # Hover format
+        very_custom_hover = "Segment: %{customdata[1]}<br>Asset: %{x}<br>Value: %{y:.1%}<br>Name: %{customdata[0]}<extra></extra>"
+
+        # Update axis and hover formats
+        fig = fig.update_yaxes(tickformat=yformat).update_traces(hovertemplate=very_custom_hover)
+    
+        # Show or return the plot
+        if to_return==False:
+            fig.show()
+        
+        else:
+            return fig 
+
 # --------------------------------------------------------------------------------------------
 def _plot_none(chart_title=None, width=720, height=360):
     """
@@ -424,6 +471,19 @@ def _time_layout(fig, title, legend, width, height):
 
     return fig
 
+# --------------------------------------------------------------------------------------------
+def _text_layout(fig, title, legend, width, height):
+    
+    fig = fig.update_layout(font = dict(color="#505050", size=10, family='sans-serif'),
+                            width = width, height = height,
+                            showlegend = legend, legend_title = None,
+                            margin = {'l':0, 't':25, 'r':10, 'b':0, 'pad':0},
+                            title = {'text':title, 'xref':'paper', 'x':1, 'xanchor': 'right',
+                                     'font':{'size':15, 'family':'sans-serif'}})
+    
+    fig = fig.update_xaxes(categoryorder='total descending',title_text='').update_yaxes(title_text='')
+    
+    return fig
 # --------------------------------------------------------------------------------------------
 def _add_space(df, fig):
     """ """
