@@ -84,7 +84,7 @@ class Portfolio:
         pps = groupings['transaction_price'].mean().unstack().T
 
         # Asset prices
-        ap = self.db.prices_table_read(assets_list=list(set(transactions['symbol']))
+        ap = self.db._read_price_time_series_data(assets_list=list(set(transactions['symbol']))
                                     ).loc[t_0:].dropna(how='all',axis=1).ffill()
         # ap = self._fetch_asset_prices(all_transactions=transactions, start_date=t_0)
 

@@ -4,7 +4,7 @@ import requests as _requests
 from ._ft_market_data import ft_aggregate, ft_summary, ft_sectors, ft_securities
 from ._sql_statements import *
 from ._utilities import _convert_df_to_str, _convert_str_to_df
-# from ._portfolio import Portfolio
+from ._portfolio import Portfolio
 
 class HerokuDB:
     
@@ -215,7 +215,7 @@ class HerokuDB:
             self.execute_sql(query = sql_prices_insert_query, data=(asset, prices_as_string))
     
     # --------------------------------------------------------------------------------------------
-    def prices_table_read(self, assets_list=None):
+    def _read_price_time_series_data(self, assets_list=None, portfolio=True):
         """ """
         try:
             if assets_list is None:
@@ -243,9 +243,21 @@ class HerokuDB:
                 results = _pd.concat([results,prices_as_df],axis=1)
 
             return results
+
         except Exception as e:
             print(e.args)
-      
+    
+    # --------------------------------------------------------------------------------------------
+    def prices_table_read(self, assets_list=None, portfolio=True):
+
+        results = self._read_price_time_series_data(assets_list=assets_list, portfolio=portfolio)
+
+        if portfolio:
+                port = Portfolio(heroku_conn=self).fetch_data()
+                results = _pd.concat([results, port['PORT']],axis=1)
+
+        return results
+
     # --------------------------------------------------------------------------------------------
     def insert_new_asset(self, dg_search_result=None, asset=None, asset_segment=None, ft_suffix=None, dg=None):
         """Provide all 5 arguments to call this functions"""

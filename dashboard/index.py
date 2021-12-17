@@ -15,7 +15,7 @@ def main():
     db.connect()
 
     pric = db.prices_table_read()
-    pric['PORT'] = Portfolio(heroku_conn=db).fetch_data()['PORT']
+    # pric['PORT'] = Portfolio(heroku_conn=db).fetch_data()['PORT']
 
     po = Portfolio(db)
     tr = po.fetch_transactions()
