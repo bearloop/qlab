@@ -4,7 +4,7 @@ import requests as _requests
 from ._ft_market_data import ft_aggregate, ft_summary, ft_sectors, ft_securities
 from ._sql_statements import *
 from ._utilities import _convert_df_to_str, _convert_str_to_df
-from ._portfolio import Portfolio
+# from ._portfolio import Portfolio
 
 class HerokuDB:
     
