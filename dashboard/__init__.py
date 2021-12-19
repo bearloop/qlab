@@ -1,1 +1,2 @@
-from . import index
+# from . import index
+from .index import run_this

@@ -1,0 +1,129 @@
+@import url("https://fonts.googleapis.com/css2?family=Maven+Pro:wght@400;900&family=Montserrat:wght@400;900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700;900&display=swap");
+
+
+body {
+    background-image: linear-gradient(#2a93cfc9, #6a16a3, #2a93cfc9);
+    background-size:cover;
+    margin-left: 16rem;
+    margin-top: 6rem;
+}
+
+/* Disable the hamburger button from appearing when the page width gets narrow */
+@media (min-width: 20px) {
+  .navbar-expand-sm,
+  .navbar-expand-md,
+  .navbar-collapse {
+    display: flex !important;
+    flex-basis: auto;
+  }
+}
+
+.navbar-collapse {
+  display: inline;
+}
+.navbar-toggler {
+  display: none;
+}
+
+/* Top-side navbar customisation */
+
+.customNavBar {
+  height: auto;
+  box-shadow: 5px 10px 20px 5px rgba(65, 68, 68, 0.8);
+  background-color: #272727 !important;
+  z-index: 2000;
+  margin: 1rem;
+  border-radius: 12pt;
+  position: fixed;
+}
+.navbar > .container {
+  margin-left: 0%;
+}
+
+.navbar-brand {
+  color: #3a8fd9 !important;
+  margin-left: 1%;
+  font-family: sans-serif;
+  font-weight: 900;
+}
+
+.sidebar {
+  box-shadow: 5px 10px 20px 5px rgba(78, 82, 82, 0.8);
+  z-index: 2000;
+  margin: 1rem;
+  margin-top: 7rem;
+  border-radius: 12pt;
+  background-color: #272727 !important;
+
+}
+
+/* Dashboard cards body*/
+
+.card {
+    border-radius: 12pt;
+    box-shadow: 5px 10px 20px 5px rgba(78, 82, 82, 0.8);
+    max-height: 35rem;
+    background-image: linear-gradient(#ffffffd3, #ffffffe3);
+    
+}
+  
+.card-body {
+    padding: 0rem 0.2rem 0.1rem 0.1rem;
+    margin: -0.8rem 0.2rem 0.1rem 0.2rem;
+    border-radius: 12pt;
+}
+
+/* Dashboard cards headers */
+
+.card-header {
+    max-height: 3.8rem;
+    border-width: 0;
+    border-radius: 12pt;
+}
+  
+.header-title {
+    color: #272727 !important;
+    font-size: 1rem;
+    font-family: sans-serif;
+    font-weight: 900;
+    margin-block-end: 0%;
+    padding: 0 0 0 8pt;
+}
+  
+.header-subtitle {
+    color: #272727 !important;
+    font-size: 0.9rem;
+    font-family: "Roboto", sans-serif;
+    font-weight: 300;
+    margin-block-end: 0%;
+    padding: 0 0 0 8pt;
+}
+
+
+.modebar {
+    display: none !important;
+  }
+
+.p-4 {
+  padding: 2.5rem !important;
+}
+  
+.custom-chart{
+    border-radius: 5pt;
+    padding: 0;
+    height: 40vh;
+    width: auto;
+  }
+
+
+/*
+.custom-chart {
+}
+max-height: 25rem;
+    height: 20rem;
+width: 80%;
+width: 200px;
+max-width: None;
+height: 200px;
+max-height: 25rem;*/
