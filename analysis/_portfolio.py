@@ -117,6 +117,9 @@ class Portfolio:
         # Allocation (weight) per holding
         weights = vph.div(vph.sum(axis=1),axis='rows')
 
+        if 'PORT' in weights.columns:
+            weights = weights.drop('PORT',axis=1)
+            
         return weights
 
     

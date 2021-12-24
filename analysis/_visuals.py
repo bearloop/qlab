@@ -8,7 +8,7 @@ import plotly.express as _px
 from ._utilities import _calc_expected_shortfall
 
 _cool_colors = ["#001219","#005f73","#0a9396","#94d2bd",
-               "#ee9b00","#ca6702","#bb3e03","#ae2012","#9b2226","7d8491"]
+               "#ee9b00","#ca6702","#bb3e03","#ae2012","#9b2226","#7d8491"]
 
 _cmx_colors = ["#e39774","#e5e5e5","#5c9ead"]
 
@@ -166,7 +166,9 @@ def plot_correl(df=None, window=21, base=None, chart_title='Correlation', legend
         hover = _chart_format_dict['Value_2f'][0]
         yformat = _chart_format_dict['Value_2f'][1]
 
-        chart_title = chart_title + ' vs '+base
+        if chart_title!='':
+            chart_title = chart_title + ' vs ' + base
+
         fig = _template_line(cor, chart_title=chart_title, legend=legend, width=width, height=height, template=_charts_template
                 ).update_traces(hovertemplate=hover).update_yaxes(tickformat=yformat)
 
@@ -242,9 +244,13 @@ def plot_cmx(df=None, chart_title='Correlation matrix', colorbar=False, to_retur
                 chart_title = chart_title + ': ' + str(date1)[:10] + ' - ' + str(date2)[:10]
                 
             except: ''
-        
+        # Add annotated text so that the heatmap does not show any NaN
+        at = cor.values.round(2).astype(str)
+        at[at=='nan'] = ''
+
         fig = _ff.create_annotated_heatmap(cor.values.round(2),
-                                    x=list(cor.columns),y=list(cor.index),reversescale=True,
+                                    x=list(cor.columns),y=list(cor.index),
+                                    annotation_text=at,reversescale=True,
                                     colorscale=_cmx_colors,hoverinfo='z',showscale=colorbar, xgap = 2, ygap = 2)
 
         fig = fig.update_layout(width = width, height = height, plot_bgcolor='white', 
