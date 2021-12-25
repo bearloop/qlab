@@ -8,6 +8,8 @@ from dash.dependencies import Input, Output
 from ..app import app
 
 card_port_performance = cp.card_performance(data_port)
+card_port_returns = cp.card_port_returns(data_port,period='day')
+card_port_kde = cp.card_port_histogram(data_port)
 card_port_alloc_hist = cp.card_portfolio_alloc_hist(data_wei_hist)
 card_port_alloc_last = cp.card_portfolio_alloc_last(data_wei_last)
 card_port_risk = cp.card_risk(data_port, window=42)
@@ -25,6 +27,10 @@ def create_layout_home():
                 # Performance and holdings
                 dbc.Row([dbc.Col([card_port_performance],width=6, id='port_perf'),
                          dbc.Col([card_port_holdings],width=6)],class_name='p-4'),
+                
+                dbc.Row([dbc.Col([card_port_returns],width=8, id='port_ret'),
+                         dbc.Col([card_port_kde],width=4)
+                         ],class_name='p-4'),
                 
                 # Allocation
                 dbc.Row([dbc.Col([card_port_alloc_hist],width=8),
@@ -73,7 +79,17 @@ def update_values(value):
     out = [cp.card_cmx(df)]
     return out
 
-
+# ---------------------
+# Portfolio returns graph
+@app.callback(
+    [Output('port_ret','children')],
+    [Input('slider_period_type_port','value')]
+)
+def update_values(value):
+    marks={10:'day',20:'week',30:'month',40:'quarter'}
+    
+    out = [cp.card_port_returns(data_port,period=marks[value])]
+    return out
 # ---------------------------------------------------------------------------------
 # ---------------------------------------------------------------------------------
 # Portfolio risk graph
@@ -140,5 +156,15 @@ def update_forward_label(value):
     out = ['Forward period - '+marks[value]]
     return out
 
+# ---------------------
+# Update returns period
+@app.callback(
+[Output('returns-period','children')],
+[Input('slider_period_type_port','value')]
+)
+def update_return_label(value):
+    marks={10:'Daily',20:'WoW',30:'MoM',40:'QoQ'}
+    out = ['Returns period - '+marks[value]]
+    return out
 # ---------------------------------------------------------------------------------
 # ---------------------------------------------------------------------------------

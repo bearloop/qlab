@@ -35,6 +35,26 @@ def card_performance(data, card_title='Portfolio Performance'):
     return card
 
 # --------------------------------------------------------------------------------------------------------------
+def card_port_returns(data, period='day', card_title='Portfolio Returns'):
+    
+    figure = vs.plot_ret(data, period=period, chart_title='', legend=False, to_return=True)
+    figure = update_background(figure)
+
+    card = card_template(figure=figure, card_title=card_title)
+
+    return card
+
+# --------------------------------------------------------------------------------------------------------------
+def card_port_histogram(data, normal=True, normal_label='PORT', card_title='Portfolio Returns KDE'):
+    
+    figure = vs.plot_hist(data, normal=normal, normal_label=normal_label, chart_title='', legend=False, to_return=True)
+    figure = update_background(figure)
+
+    card = card_template(figure=figure, card_title=card_title)
+
+    return card
+
+# --------------------------------------------------------------------------------------------------------------
 def card_risk(data, window=21, card_title='Portfolio Risk Annualised'):
     
     figure = vs.plot_vol(data, window=window, chart_title='', legend=False, to_return=True)

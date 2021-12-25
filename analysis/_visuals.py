@@ -15,7 +15,7 @@ _cmx_colors = ["#e39774","#e5e5e5","#5c9ead"]
 _chart_format_dict = {'Percent':   ["Date: %{x|%Y-%m-%d}<br>Value: %{y:.1%}",  ".0%"       ],
                       'Value':     ["Date: %{x|%Y-%m-%d}<br>Value: %{y}",      ".1f"       ],
                       'Value_2f':  ["Date: %{x|%Y-%m-%d}<br>Value: %{y:.2f}",  ".2f"       ],
-                      'Density':   ["Return: %{x}<br>Count: %{y}",             ".0f", ".1%"]}
+                      'Density':   ["Return: %{x:.2%}<br>Count: %{y}",         ".0f", ".1%"]}
 
 _charts_template='simple_white'
 
@@ -53,6 +53,49 @@ def plot_line(df=None, rebase=False, chart_title='Historical Performance', legen
         
         else:
             return fig  
+
+# --------------------------------------------------------------------------------------------
+def plot_ret(df=None, period=None, chart_title='Returns', legend=True, to_return=False, width=720, height=360):
+    """
+    Plots asset price time series returns.
+    period: str, end of week, month or quarter 
+    """
+
+    if df is None: 
+        return _plot_none(chart_title=chart_title, width=width, height=height)
+
+    else:
+        hover = _chart_format_dict['Percent'][0]
+        yformat = _chart_format_dict['Percent'][1]
+
+        if period == 'week':
+            df = df.resample('W-FRI').apply(lambda x: x[-1])
+        elif period == 'month':
+            df = df.resample('M').apply(lambda x: x[-1])
+        elif period == 'quarter':
+            df = df.resample('Q').apply(lambda x: x[-1])
+
+        rt = _pd.DataFrame(df.pct_change().dropna())
+        # Make the bar chart plot
+        fig = _px.bar(rt, template=_charts_template, color_discrete_sequence=_cool_colors)
+
+        # Update layout
+        fig = _time_layout(fig, title=chart_title, legend=legend, width=width, height=height)
+
+        # Add space to the right part of the graph
+        if (period is None) or period =='day':
+            fig = _add_space(rt, fig)
+            fig = fig.update_traces(marker_line_width=0, selector=dict(type="bar"))
+
+        # Update traces, y axis format
+        fig = fig.update_traces(hovertemplate=hover).update_yaxes(tickformat=yformat)
+
+        # Show or return the plot
+        if to_return==False:
+            fig.show()
+        
+        else:
+            return fig
 
 # --------------------------------------------------------------------------------------------
 def plot_vol(df=None, window=21, freq=252, chart_title='Historical Volatility', legend=True, to_return=False, width=720, height=360):
@@ -180,19 +223,27 @@ def plot_correl(df=None, window=21, base=None, chart_title='Correlation', legend
             return fig  
 
 # --------------------------------------------------------------------------------------------
-def plot_hist(df=None, chart_title='Returns KDE', legend=True, to_return=False, width=720, height=360):
+def plot_hist(df=None, normal=False, normal_label=None, chart_title='Returns KDE', legend=True, to_return=False, width=720, height=360):
     
     if df is None: 
         return _plot_none(chart_title=chart_title, width=width, height=height)
     
     else:
+        
         labels = list(df.columns)
         data = [df[i].dropna().pct_change().dropna() for i in labels]
+
+        if normal:
+            mu = df[normal_label].dropna().pct_change().mean()
+            sd = df[normal_label].dropna().pct_change().std()
+            norm_dist = _pd.Series([_np.random.normal(loc=mu, scale=sd) for k in range(2000)])
+            labels.append('NORM (MU: ' + str(round(mu*100,1))+'% - SD:' + str(round(sd*100,1))+'%)')
+            data.append(norm_dist)
 
         hover = _chart_format_dict['Density'][0]
         yformat = _chart_format_dict['Density'][1]
         xformat = _chart_format_dict['Density'][2]
-
+        
         fig = _ff.create_distplot(data, group_labels=labels, show_curve='kde',
                                   show_hist=False, show_rug=False, colors=_cool_colors)
          

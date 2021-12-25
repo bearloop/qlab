@@ -12,3 +12,9 @@ slider_forward_days_port = dcc.Slider(id='slider_forward_days_port',
         marks={1:'',5:'',21:'',63:'',},
         value=21
     )
+# --------------------------------------------------------------------------------------------------------------
+slider_period_type_port = dcc.Slider(id='slider_period_type_port',
+        min=10,max=40,step=None,
+        marks={10:'',20:'',30:'',40:''},
+        value=20
+    )

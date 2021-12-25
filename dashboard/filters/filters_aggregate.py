@@ -1,7 +1,7 @@
 import dash_bootstrap_components as dbc
 from dash import html
 from .filters_dropdowns import dropdown_time_period_port
-from .filters_sliders import slider_lookback_days_port, slider_forward_days_port
+from .filters_sliders import slider_lookback_days_port, slider_forward_days_port, slider_period_type_port
 # --------------------------------------------------------------------------------------------------------------
 # Links to new pages
 pages_menu = html.Div([
@@ -21,6 +21,7 @@ pages_menu = html.Div([
 port_view_filters= html.Div([
           html.P('Filters',className="header-title-filters"),
           html.Hr(className='hr'),
+          html.Div([
           dbc.CardBody([html.P('Date range',className="filters-p-class"),
                     dropdown_time_period_port],id='filters-card-body'),
           html.Hr(className='hr'),
@@ -29,7 +30,11 @@ port_view_filters= html.Div([
           html.Hr(className='hr'),
           dbc.CardBody([html.P('Forward period - ',className="filters-p-class", id='forward-period'),
                     slider_forward_days_port],id='filters-card-body-3'),
-          html.Hr(className='hr'),          
+          html.Hr(className='hr'),
+          dbc.CardBody([html.P('Returns period - ',className="filters-p-class", id='returns-period'),
+                    slider_period_type_port],id='filters-card-body-4'),
+          html.Hr(className='hr')
+          ], id='portfolio-view-inside-div')
 ],id='portfolio-view-filters')
 
 

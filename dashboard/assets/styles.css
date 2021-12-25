@@ -138,13 +138,16 @@ body {
   border:1px solid #2c71c0;
 }
 
-#portfolio-view-filters {
-  margin-top:1rem;
-  max-height: 53vh;
-  overflow: scroll;
+#portfolio-view-filters{
   margin-top: 1rem;
+}
+
+#portfolio-view-inside-div {
+  max-height: 41vh;
+  overflow: scroll;
   padding-bottom: 1rem;
 }
+
 
 .header-title-filters{
   font-size: 1.2rem;
@@ -160,7 +163,7 @@ body {
   margin: 0rem;
 }
 
-#slider_lookback_days_port, #slider_forward_days_port{
+#slider_lookback_days_port, #slider_forward_days_port, #slider_period_type_port{
   padding: 0 !important;
   padding-left: 1rem !important;
   padding-right: 1rem !important;
@@ -203,9 +206,11 @@ body {
 
 /*------------------------------------------------------------------------------*/
 .p-4 {
-  padding: 2.5rem !important;
-  height:100%;
+  padding: 3rem !important;
+  height: 100%;
   min-height: 100%;
+  padding-top: 2rem !important;
+  padding-bottom: 2rem !important;
 }
 
 /*------------------------------------------------------------------------------*/
