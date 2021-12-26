@@ -10,7 +10,7 @@ from ._utilities import _calc_expected_shortfall
 _cool_colors = ["#001219","#005f73","#0a9396","#94d2bd",
                "#ee9b00","#ca6702","#bb3e03","#ae2012","#9b2226","#7d8491"]
 
-_cmx_colors = ["#e39774","#e5e5e5","#5c9ead"]
+_cmx_colors = ["#961957","#d0d5db","#2c71c0"]#["#e39774","#e5e5e5","#5c9ead"]
 
 _chart_format_dict = {'Percent':   ["Date: %{x|%Y-%m-%d}<br>Value: %{y:.1%}",  ".0%"       ],
                       'Value':     ["Date: %{x|%Y-%m-%d}<br>Value: %{y}",      ".1f"       ],
@@ -378,7 +378,7 @@ def plot_alloc(df=None, chart_title='Portfolio Allocation', to_return=False, wid
             return fig 
 
 # --------------------------------------------------------------------------------------------
-def plot_treemap(df, sort_by='1-yr', chart_title='Performance', midpoint=0, colorbar=False, 
+def plot_treemap(df, sort_by='1-yr', frame=True, chart_title='Performance', midpoint=0, colorbar=False, 
                                       reverse=False, to_return=False, width=920, height=640):
     """
     Plots a treemap for performance or volatility (whichever the dataframe includes).
@@ -413,7 +413,11 @@ def plot_treemap(df, sort_by='1-yr', chart_title='Performance', midpoint=0, colo
         else: colors = _cmx_colors
 
         # Treemap figure
-        frame = 'Assets Monitor: '+chart_title+ ' - '+sort_by
+        if frame:
+            frame = 'Assets Monitor: '+chart_title+ ' - '+sort_by
+        else:
+            frame = 'All Assets'
+
         fig = _px.treemap(df,
                     color=sort_by,hover_data=['name']+list(dd.keys()),
                     color_continuous_scale=colors,
@@ -433,7 +437,7 @@ def plot_treemap(df, sort_by='1-yr', chart_title='Performance', midpoint=0, colo
             return fig 
 
 # --------------------------------------------------------------------------------------------
-def plot_barchart(df, sort_by='1-yr', chart_title='Cum. Returns', legend=True, to_return=False, width=720, height=360):
+def plot_barchart(df, sort_by='1-yr', chart_title='Cum. Returns', show_range=True, legend=True, to_return=False, width=720, height=360):
 
     if df is None: 
         return _plot_none(chart_title=chart_title, width=width, height=height)
@@ -448,14 +452,15 @@ def plot_barchart(df, sort_by='1-yr', chart_title='Cum. Returns', legend=True, t
         fig = _px.bar(df, x=df.index, y=df[sort_by], template=_charts_template,
                      color='segment',  color_discrete_sequence=_cool_colors[1:], hover_data=['name','segment'])
         
-        # Adjust tile if period is "custom"
-        if sort_by=='Custom':
-            title = chart_title + ' - custom date range'
-        else:
-            title = chart_title+': '+sort_by
+        # Adjust title if period is "custom"
+        if show_range:
+            if sort_by=='Custom':
+                chart_title = chart_title + ' - custom date range'
+            else:
+                chart_title = chart_title+': '+sort_by
         
         # Make further format / layout modifications with _text_layout
-        fig = _text_layout(fig=fig, title=title, legend=legend, width=width, height=height)
+        fig = _text_layout(fig=fig, title=chart_title, legend=legend, width=width, height=height)
         
         # If there's portfolio data, draw a horizontal line
         if 'PORT' in df[sort_by].index:
@@ -541,6 +546,7 @@ def _text_layout(fig, title, legend, width, height):
     fig = fig.update_xaxes(categoryorder='total descending',title_text='').update_yaxes(title_text='')
     
     return fig
+
 # --------------------------------------------------------------------------------------------
 def _add_space(df, fig):
     """ """
@@ -549,7 +555,6 @@ def _add_space(df, fig):
     fig = fig.add_vrect(x0=x0, x1=x1, col=1, opacity=0.05)
 
     return fig
-
 
 # --------------------------------------------------------------------------------------------
 

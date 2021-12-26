@@ -118,36 +118,20 @@ body {
     border-radius: 12pt;
 }
 
-#filters-card-body{
+/*------------------------------------------------------------------------------*/
+/* Dashboard filters cards*/
+#filters-card-body, #filters-card-body-assets{
   z-index: 10000;
   box-shadow: none;
   background-image: none;
   border-radius: 5pt;
   background-color: #272727;
   margin: 1.0rem 0.0rem;
-  
 }
+
 #filters-card-body-2, #filters-card-body-3, #filters-card-body-4{
   margin: 1.0rem 0.0rem;
 }
-
-#portfolio-view-filters, #navigation-menu{
-  border-top: 1px solid #2c71c0;
-  border-radius: 12pt;
-  padding: 1rem;
-  border:1px solid #2c71c0;
-}
-
-#portfolio-view-filters{
-  margin-top: 1rem;
-}
-
-#portfolio-view-inside-div {
-  max-height: 41vh;
-  overflow: scroll;
-  padding-bottom: 1rem;
-}
-
 
 .header-title-filters{
   font-size: 1.2rem;
@@ -161,6 +145,26 @@ body {
 
 .hr{
   margin: 0rem;
+}
+
+/*------------------------------------------------------------------------------*/
+/* Portfolio view filters*/
+#portfolio-view-filters, #navigation-menu, #assets-view-filters{
+  border-top: 1px solid #2c71c0;
+  border-radius: 12pt;
+  padding: 1rem;
+  border:1px solid #2c71c0;
+}
+
+#portfolio-view-filters, #assets-view-filters{
+  margin-top: 1rem;
+}
+
+#portfolio-view-inside-div, #assets-view-inside-div {
+  max-height: 41vh;
+  min-height: 41vh;
+  overflow: scroll;
+  padding-bottom: 1rem;
 }
 
 #slider_lookback_days_port, #slider_forward_days_port, #slider_period_type_port{
@@ -195,6 +199,7 @@ body {
     margin-block-end: 0%;
     padding: 0 0 0 8pt;
 }
+
 
 
 /*------------------------------------------------------------------------------*/
@@ -232,6 +237,16 @@ body {
     margin-right: auto;
     height: 40vh;
     width: auto;
+}
+
+/*------------------------------------------------------------------------------*/
+/*Custom treemap chart css*/
+.custom-chart-treemap{
+  border-radius: 5pt;
+  margin: -3.5rem;
+  margin-top:-2rem;
+  height: 60vh;
+  width: auto;
 }
 
 /*------------------------------------------------------------------------------*/

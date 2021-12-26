@@ -1,23 +1,26 @@
 import dash_bootstrap_components as dbc
 from dash import html
 from ..utils import navbar
-from ..hconn import data_port, data_cmx, data_wei_hist, data_wei_last
+from ..hconn import data_assets
 from ..cards import cards_plots as cp
+from dash.dependencies import Input, Output
+from ..app import app
 
-# card_port_performance = cp.card_performance(data_port)
-# card_port_alloc_hist = cp.card_portfolio_alloc_hist(data_wei_hist)
-# card_port_alloc_last = cp.card_portfolio_alloc_last(data_wei_last)
-# card_port_risk = cp.card_risk(data_port, window=21)
-# card_port_var = cp.card_var(data_port, window=21, forward=21, conf=0.95)
-# card_port_esfall = cp.card_exp_shortfall(data_port, window=21, conf=0.95)
-# card_correl_matrix = cp.card_cmx(data_cmx)
+
+card_assets_treemap = cp.card_treemap(data_assets, sort_by='1-wk')
+card_assets_barchart = cp.card_barchart(data_assets, sort_by='1-wk')
 
 
 def create_layout_2():
 
     return html.Div([
                 html.Div([navbar,
-                
+
+                # Assets Treemap
+                dbc.Row([dbc.Col([card_assets_treemap], width=12, id='assets_treemap')], class_name='p-4'),
+
+                # Assets Barchart
+                dbc.Row([dbc.Col([card_assets_barchart], width=12, id='assets_barchart')], class_name='p-4')
 
             ],className='my-page-container')
 
@@ -25,3 +28,32 @@ def create_layout_2():
     )
 
 layout_2 = create_layout_2()
+
+
+
+# ---------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------
+# Assets treemap
+@app.callback(
+    [Output('assets_treemap','children')],
+    [Input('dropdown_time_period_assets','value')]
+)
+def update_values(value):
+    
+    out = [cp.card_treemap(data_assets, sort_by=value)]
+    return out
+
+# ---------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------
+# Assets barchart
+@app.callback(
+    [Output('assets_barchart','children')],
+    [Input('dropdown_time_period_assets','value')]
+)
+def update_values(value):
+    
+    out = [cp.card_barchart(data_assets, sort_by=value)]
+    return out
+
+# ---------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------

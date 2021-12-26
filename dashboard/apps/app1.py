@@ -15,6 +15,7 @@ card_port_alloc_last = cp.card_portfolio_alloc_last(data_wei_last)
 card_port_risk = cp.card_risk(data_port, window=42)
 card_port_var = cp.card_var(data_port, window=42, forward=21, conf=0.95)
 card_port_esfall = cp.card_exp_shortfall(data_port, window=42, conf=0.95)
+card_port_ddown = cp.card_drawdown(data_cmx)
 card_correl_matrix = cp.card_cmx(data_cmx)
 card_correl_rolling = cp.card_correl(data_cmx, window=42, base='PORT', legend=True)
 card_port_holdings = ct.card_table_portfolio_holdings_summary(db)
@@ -29,7 +30,7 @@ def create_layout_home():
                          dbc.Col([card_port_holdings],width=6)],class_name='p-4'),
                 
                 dbc.Row([dbc.Col([card_port_returns],width=8, id='port_ret'),
-                         dbc.Col([card_port_kde],width=4)
+                         dbc.Col([card_port_kde],width=4, id='port_kde')
                          ],class_name='p-4'),
                 
                 # Allocation
@@ -43,8 +44,11 @@ def create_layout_home():
 
                 # Correlation
                 dbc.Row([dbc.Col([card_correl_matrix],width=6, id='port_cmx'),
-                         dbc.Col([card_correl_rolling],width=6,id='port_correl')],class_name='p-4')
+                         dbc.Col([card_correl_rolling],width=6,id='port_correl')],class_name='p-4'),
                 
+                # Drawdown
+                dbc.Row([dbc.Col([card_port_ddown], width=12, id='port_ddown')], class_name='p-4')
+
             ],className='my-page-container')
 
     ], className="page",

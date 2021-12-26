@@ -1,6 +1,5 @@
-from datetime import datetime as _datetime
 from ...analysis import _visuals as vs
-from .cards_templates import card_template, card_template_cmx, update_background
+from .cards_templates import card_template, card_template_cmx, card_template_treemap, update_background, get_period
 
 
 # --------------------------------------------------------------------------------------------------------------
@@ -104,16 +103,24 @@ def card_cmx(data):
     
     figure = vs.plot_cmx(data, chart_title='', colorbar=False, to_return=True, show_dates=False)
     figure = update_background(figure)
-
-    # Get period
-    date1 = _datetime.strftime(data.dropna().index[0], '%Y-%m-%d')
-    date2 = _datetime.strftime(data.dropna().index[-1], '%Y-%m-%d')
-    subtitle = 'Period: ' + str(date1)[:10] + ' - ' + str(date2)[:10]
+    subtitle = get_period(data)
 
     card = card_template_cmx(figure=figure,
                              card_title='Correlation Matrix',
-                             card_sub_title=subtitle)
+                             card_sub_title='Period: ' + subtitle)
     
+    return card
+
+# --------------------------------------------------------------------------------------------------------------
+def card_drawdown(data):
+
+    figure = vs.plot_ddown(data, chart_title='', to_return=True)
+    figure = update_background(figure)
+    subtitle = get_period(data)
+    card = card_template(figure=figure,
+                         card_title='Historical Price Drawdown',
+                         card_sub_title='Drawdown over: ' + subtitle)
+
     return card
 
 # --------------------------------------------------------------------------------------------------------------
@@ -129,3 +136,31 @@ def card_correl(data, window=21, base='PORT', legend=True, card_title='Rolling C
                          card_sub_title=subtitle)
 
     return card
+
+
+# --------------------------------------------------------------------------------------------------------------
+def card_treemap(data, sort_by, card_title='Assets Heatmap', reverse=False):
+
+    figure = vs.plot_treemap(data, sort_by=sort_by, frame=False, chart_title='', midpoint=0,
+                             colorbar=False, reverse=reverse, to_return=True)
+    figure = update_background(figure)
+
+    card = card_template_treemap(figure=figure,
+                                 card_title=card_title + ' (' + sort_by + ')',
+                                 card_sub_title='')
+    
+    return card
+
+# --------------------------------------------------------------------------------------------------------------
+def card_barchart(data, sort_by, card_title='Assets Monitor'):
+
+    figure = vs.plot_barchart(data, sort_by=sort_by, chart_title='', show_range=False, legend=True, to_return=True)
+    figure = update_background(figure)
+
+    card = card_template(figure=figure,
+                         card_title=card_title + ' (' + sort_by + ')',
+                         card_sub_title='')
+    
+    return card
+
+# --------------------------------------------------------------------------------------------------------------
