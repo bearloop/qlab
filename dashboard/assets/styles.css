@@ -251,11 +251,36 @@ body {
 
 /*------------------------------------------------------------------------------*/
 /*Custom table css*/
-#custom-table{
+#custom-table-transactions, #custom-table-fund-details{
   background-color: transparent;
   margin: 2% ;
   padding: 2%;
   overflow: auto;
+}
+
+
+.tab.jsx-3468109796, .tab--selected.jsx-3468109796, 
+.tab.jsx-3468109796:last-of-type,
+.tab.jsx-3468109796:last-of-type.tab--selected {
+  padding: 0px !important;
+  background-color: transparent !important;
+  border-width: 2px 0px 0px 0px;
+  border: 0px solid #d6d6d6 !important;
+  border-top: 8px solid #b7bbc0 !important;
+  width: 4rem !important;
+}
+
+.tab--selected.jsx-3468109796, .tab.jsx-3468109796:last-of-type.tab--selected {
+  border-top: 8px solid #2c71c0 !important;
+}
+
+.jsx-4017309047.tab-container{
+  padding-left: 4rem;
+  padding-right: 4rem;
+  padding-top: 1rem;
+  display: flex;
+  justify-content: center;
+  
 }
 
 .dash-header{

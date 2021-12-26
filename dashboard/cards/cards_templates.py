@@ -46,10 +46,6 @@ def card_template_treemap(figure, card_title='Bla Bla', card_sub_title=''):
                 )
         ]
     )
-# --------------------------------------------------------------------------------------------------------------
-def update_background(fig):
-
-    return fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
 
 # --------------------------------------------------------------------------------------------------------------
 def card_table(table, card_title='Bla Bla', card_sub_title=''):
@@ -67,6 +63,31 @@ def card_table(table, card_title='Bla Bla', card_sub_title=''):
     )
 
 # --------------------------------------------------------------------------------------------------------------
+def card_table_test(table1, table2, card_title='Bla Bla', card_sub_title=''):
+
+    tabs = dcc.Tabs(
+                    [
+                      dcc.Tab(label='', children=[table1]),
+                      dcc.Tab(label='', children=[table2])
+                    ]
+                   )
+
+    return dbc.Card(
+        [
+            dbc.CardHeader(
+                html.Div([html.H3(card_title,className="header-title"),
+                html.P(card_sub_title,className="header-subtitle")])
+                ),
+            dbc.CardBody(
+                [tabs]
+                )
+        ], class_name="h-100"
+    )
+# --------------------------------------------------------------------------------------------------------------
+def update_background(fig):
+
+    return fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+
 def get_period(data):
      # Get period
     date1 = _datetime.strftime(data.dropna().index[0], '%Y-%m-%d')
