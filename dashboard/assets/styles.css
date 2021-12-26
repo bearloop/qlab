@@ -129,7 +129,7 @@ body {
   margin: 1.0rem 0.0rem;
 }
 
-#filters-card-body-2, #filters-card-body-3, #filters-card-body-4{
+#filters-card-body-2, #filters-card-body-3, #filters-card-body-4, #filters-card-body-assets-2{
   margin: 1.0rem 0.0rem;
 }
 
@@ -161,13 +161,13 @@ body {
 }
 
 #portfolio-view-inside-div, #assets-view-inside-div {
-  max-height: 41vh;
-  min-height: 41vh;
+  max-height: 42vh;
+  min-height: 42vh;
   overflow: scroll;
   padding-bottom: 1rem;
 }
 
-#slider_lookback_days_port, #slider_forward_days_port, #slider_period_type_port{
+#slider_lookback_days_port, #slider_forward_days_port, #slider_period_type_port, #slider_monitor_type_port{
   padding: 0 !important;
   padding-left: 1rem !important;
   padding-right: 1rem !important;

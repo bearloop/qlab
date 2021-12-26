@@ -1,7 +1,7 @@
 import dash_bootstrap_components as dbc
 from dash import html
 from .filters_dropdowns import dropdown_time_period_port, dropdown_time_period_assets
-from .filters_sliders import slider_lookback_days_port, slider_forward_days_port, slider_period_type_port
+from .filters_sliders import slider_lookback_days_port, slider_forward_days_port, slider_period_type_port, slider_monitor_type_port
 # --------------------------------------------------------------------------------------------------------------
 # Links to new pages
 pages_menu = html.Div([
@@ -47,9 +47,9 @@ assets_view_filters= html.Div([
           dbc.CardBody([html.P('Date range',className="filters-p-class"),
                     dropdown_time_period_assets],id='filters-card-body-assets'),
           html.Hr(className='hr'),
-        #   dbc.CardBody([html.P('Lookback period - ',className="filters-p-class", id='lookback-period'),
-        #             slider_lookback_days_port],id='filters-card-body-assets-2'),
-        #   html.Hr(className='hr'),
+          dbc.CardBody([html.P('Method - ',className="filters-p-class", id='calculation-type'),
+                    slider_monitor_type_port],id='filters-card-body-assets-2'),
+          html.Hr(className='hr'),
           ], id='assets-view-inside-div')
 ],id='assets-view-filters')
 

@@ -139,9 +139,9 @@ def card_correl(data, window=21, base='PORT', legend=True, card_title='Rolling C
 
 
 # --------------------------------------------------------------------------------------------------------------
-def card_treemap(data, sort_by, card_title='Assets Heatmap', reverse=False):
+def card_treemap(data, sort_by, card_title='Assets Heatmap', reverse=False, midpoint=0):
 
-    figure = vs.plot_treemap(data, sort_by=sort_by, frame=False, chart_title='', midpoint=0,
+    figure = vs.plot_treemap(data, sort_by=sort_by, frame=False, chart_title='', midpoint=midpoint,
                              colorbar=False, reverse=reverse, to_return=True)
     figure = update_background(figure)
 

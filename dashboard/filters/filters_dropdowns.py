@@ -16,7 +16,7 @@ dropdown_time_period_port = dcc.Dropdown(options=[
                         )
 
 # --------------------------------------------------------------------------------------------------------------
-dropdown_time_period_assets = dcc.Dropdown(options=[
+dropdown_time_period_assets_options = [
                                 {'label': 'Year-to-date', 'value': 'YtD'},
                                 {'label': 'Month-to-date', 'value': 'MtD'},
                                 {'label': '1 year', 'value': '1-yr'},
@@ -24,6 +24,8 @@ dropdown_time_period_assets = dcc.Dropdown(options=[
                                 {'label': '1 month', 'value': '1-mo'},
                                 {'label': '1 week', 'value': '1-wk'},
                                 {'label': '1 day', 'value': '1-day'}
-                            ],value='1-wk',
-                            multi=False,clearable=False,id='dropdown_time_period_assets'
+                            ]
+dropdown_time_period_assets = dcc.Dropdown(options=dropdown_time_period_assets_options,
+                                           value='1-wk',multi=False,clearable=False,
+                                           id='dropdown_time_period_assets'
                         )

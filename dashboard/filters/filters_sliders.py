@@ -18,3 +18,10 @@ slider_period_type_port = dcc.Slider(id='slider_period_type_port',
         marks={10:'',20:'',30:'',40:''},
         value=20
     )
+
+# --------------------------------------------------------------------------------------------------------------
+slider_monitor_type_port = dcc.Slider(id='slider_monitor_type_port',
+        min=10,max=30,step=None,
+        marks={10:'',20:'',30:''},
+        value=10
+    )
