@@ -1,0 +1,203 @@
+
+/*------------------------------------------------------------------------------*/
+/*Customise date picker*/
+
+.DateRangePicker {
+    display: inline-block;
+    color: #ffffff !important;
+  }
+  
+  .DateRangePickerInput {
+    background-color: rgba(255, 255, 255, 0) !important;
+    color: #49505700;
+    display: block;
+  }
+  
+  .DateRangePickerInput__withBorder {
+    border-radius: 0.25rem;
+    border: 1px solid #ced4da;
+    display: flex;
+  }
+  
+  .DateInput {
+    background: transparent;
+    
+    width: 100%;
+  }
+  
+  .DateInput > input::placeholder {
+    color: #ffffff !important;
+    opacity: 1;
+  }
+  
+  .DateInput > input::-ms-input-placeholder {
+    color: #ffffff !important;
+  }
+  
+  .DateInput > input:-ms-input-placeholder {
+    color: #ffffff !important;
+  }
+  
+  .DateInput_input {
+    
+    height: calc(1.5em + 0.75rem);
+    font-size: 0.5rem !important;
+    font-weight: 400;
+    border-bottom: 0;
+    background-color: transparent !important;
+    text-align: center;
+    color: #ffffff;
+  }
+  
+  
+  .DateRangePickerInput_arrow_svg{
+      vertical-align: middle;
+      fill: #ffffff;
+      height: 24px;
+      width: 24px;
+  }
+  
+  
+  .DateInput_fang.DateInput_fang_1 {
+    top: calc(calc(1.5em + 0.75rem + 2px) + 5px) !important;
+  }
+  
+  .DateInput_fang.DateInput_fang_1 .DateInput_fangShape {
+    background-color: rgb(228, 19, 19) !important;
+  }
+  
+  .DateInput_fang.DateInput_fang_1 .DateInput_fangStroke {
+    stroke: rgba(0, 0, 0, 0.2);
+  }
+  
+  
+  
+  .DayPicker {
+    background: rgb(255, 255, 255);
+  }
+  
+  .DayPicker.DayPicker__withBorder {
+    border-radius: 1rem;
+  }
+  
+  .CalendarMonth .CalendarMonth_1{
+    background:  transparent !important;
+  }
+  
+  .DayPicker_weekHeader {
+    color: #807f7f;
+  }
+  
+  .DayPickerNavigation_button {
+    border-radius: 0.9rem;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    background: #fff;
+  }
+  
+  .DayPickerNavigation_button svg {
+    fill: #212529;
+  }
+  
+  .DayPickerNavigation_button:hover {
+    background: #f2f2f2;
+  }
+  
+  .DayPickerNavigation_button:hover svg {
+    fill: #212529;
+  }
+  
+   .CalendarMonth_caption {
+    color: #212529;
+  }
+  
+  .CalendarMonthGrid {
+    background-color: #fff;
+  }
+  
+  .CalendarMonth {
+    background-color: #fff;
+  }
+  
+  .CalendarDay__default {
+    color: #212529;
+    border-color: #e6e5e5;
+    background-color: transparent;
+  }
+  
+  .CalendarDay__default:hover {
+    background: #f2f2f2;
+    border-color: #e6e5e5;
+    color: #212529;
+  }
+  
+  .CalendarDay__default.CalendarDay__selected, .CalendarDay__default.CalendarDay__selected:hover {
+    background: #007bff;
+    border: 1px double #007bff;
+    color: #fff;
+  }
+  
+  .CalendarDay__default.CalendarDay__hovered_span,.CalendarDay__default.CalendarDay__hovered_span:hover {
+    background: #3395ff;
+    color: #fff;
+  }
+  
+  .CalendarDay__default.CalendarDay__blocked_out_of_range, .CalendarDay__default.CalendarDay__blocked_out_of_range:hover {
+    color: #e6e5e5;
+    border-color: #e6e5e5;
+    background: #fff;
+    cursor: default;
+  }
+  
+  .CalendarDay__outside {
+    border: 0;
+    cursor: default;
+  }
+  
+  .DayPicker_transitionContainer {
+    border-radius: 12pt;
+  }
+  
+  .DayPickerKeyboardShortcuts_show::before {
+    content: none;
+  }
+  
+  .DayPickerKeyboardShortcuts_show__bottomRight {
+    width: 0;
+    height: 0;
+    border-top: 12px solid transparent;
+    border-bottom: 12px solid #ffffff;
+    border-left: 16px solid transparent;
+    border-right: 16px solid #ffffff;
+    border-bottom-right-radius: 12pt;
+  }
+  
+  .DayPickerKeyboardShortcuts_show__bottomRight::before {
+    border-right: 0;
+    border-top: 0;
+  }
+  
+  .DayPickerKeyboardShortcuts_show__bottomRight:hover {
+    border-top: 12px solid transparent;
+    border-bottom: 12px solid #ffffff;
+    border-left: 16px solid transparent;
+    border-right: 16px solid #ffffff;
+  }
+  
+   .DayPickerKeyboardShortcuts_show__bottomRight .DayPickerKeyboardShortcuts_showSpan {
+    bottom: -11px;
+    right: -12px;
+    color: #fff;
+  }
+  
+  .DayPickerKeyboardShortcuts_panel {
+    background: #fff;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 0.3rem;
+    color: #212529;
+  }
+  
+  .DayPickerKeyboardShortcuts_panel .DayPickerKeyboardShortcuts_closeSvg {
+    fill: #212529;
+  }
+  
+  /*------------------------------------------------------------------------------*/

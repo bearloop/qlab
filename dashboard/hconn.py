@@ -32,4 +32,11 @@ data_assets_ann_ret = calc_annualised_ret(pdt, db=db)
 data_assets_ann_vol = calc_annualised_vol(pdt, db=db)
 
 # Assets view
+def _sec_list(db):
+    db.execute_sql("SELECT symbol, name FROM securities WHERE product_type='ETF' ORDER BY name ASC")
+    df = db.fetch()
+    return df
+
+sec_list = _sec_list(db=db)
+
 

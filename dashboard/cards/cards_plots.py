@@ -24,9 +24,12 @@ def card_portfolio_alloc_last(data):
     return card
 
 # --------------------------------------------------------------------------------------------------------------
-def card_performance(data, card_title='Portfolio Performance'):
+def card_performance(data, card_title='Portfolio Performance', dropna=False, legend=False):
     
-    figure = vs.plot_line(data, rebase=True, chart_title='', legend=False, to_return=True)
+    if dropna:
+        data = data.dropna().copy()
+
+    figure = vs.plot_line(data, rebase=True, chart_title='', legend=legend, to_return=True)
     figure = update_background(figure)
 
     card = card_template(figure=figure, card_title=card_title)
@@ -54,9 +57,12 @@ def card_port_histogram(data, normal=True, normal_label='PORT', card_title='Port
     return card
 
 # --------------------------------------------------------------------------------------------------------------
-def card_risk(data, window=21, card_title='Portfolio Risk Annualised'):
+def card_risk(data, window=21, card_title='Portfolio Risk Annualised', dropna=False, legend=False):
     
-    figure = vs.plot_vol(data, window=window, chart_title='', legend=False, to_return=True)
+    if dropna:
+        data = data.dropna().copy()
+
+    figure = vs.plot_vol(data, window=window, chart_title='', legend=legend, to_return=True)
     figure = update_background(figure)
 
     card = card_template(figure=figure,
@@ -99,26 +105,29 @@ def card_exp_shortfall(data, window=21, conf=0.95, card_title='Portfolio Exp. Sh
     return card
 
 # --------------------------------------------------------------------------------------------------------------
-def card_cmx(data):
+def card_cmx(data, card_title='Correlation Matrix'):
     
     figure = vs.plot_cmx(data, chart_title='', colorbar=False, to_return=True, show_dates=False)
     figure = update_background(figure)
     subtitle = get_period(data)
 
     card = card_template_cmx(figure=figure,
-                             card_title='Correlation Matrix',
+                             card_title=card_title,
                              card_sub_title='Period: ' + subtitle)
     
     return card
 
 # --------------------------------------------------------------------------------------------------------------
-def card_drawdown(data):
+def card_drawdown(data, card_title='Historical Price Drawdown', dropna=False, legend=False):
 
-    figure = vs.plot_ddown(data, chart_title='', to_return=True)
+    if dropna:
+        data = data.dropna().copy()
+
+    figure = vs.plot_ddown(data, chart_title='', legend=legend, to_return=True)
     figure = update_background(figure)
     subtitle = get_period(data)
     card = card_template(figure=figure,
-                         card_title='Historical Price Drawdown',
+                         card_title=card_title,
                          card_sub_title='Drawdown over: ' + subtitle)
 
     return card

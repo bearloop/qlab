@@ -30,6 +30,7 @@ def plot_line(df=None, rebase=False, chart_title='Historical Performance', legen
         return _plot_none(chart_title=chart_title, width=width, height=height)
 
     else:
+        df = _ffill(df)
         opacity = 0
         hover = _chart_format_dict['Value'][0]
         yformat = _chart_format_dict['Value'][1]
@@ -65,6 +66,7 @@ def plot_ret(df=None, period=None, chart_title='Returns', legend=True, to_return
         return _plot_none(chart_title=chart_title, width=width, height=height)
 
     else:
+        df = _ffill(df)
         hover = _chart_format_dict['Percent'][0]
         yformat = _chart_format_dict['Percent'][1]
 
@@ -106,6 +108,7 @@ def plot_vol(df=None, window=21, freq=252, chart_title='Historical Volatility', 
         return _plot_none(chart_title=chart_title, width=width, height=height)
     
     else:
+        df = _ffill(df)
         volatility = df.pct_change().rolling(window=window, min_periods=window).std()*_np.sqrt(freq)
         hover = _chart_format_dict['Percent'][0]
         yformat = _chart_format_dict['Percent'][1]
@@ -129,7 +132,8 @@ def plot_ddown(df=None, chart_title='Drawdown', legend=True, to_return=False, wi
         return _plot_none(chart_title=chart_title, width=width, height=height)
     
     else:
-        df = df.fillna(method="ffill")
+        df = _ffill(df)
+        # df = df.fillna(method="ffill")
         maxPrices = df.cummax()
         ddown = (df/maxPrices)-1
 
@@ -155,6 +159,7 @@ def plot_var(df=None, window=21, forward=21, conf=0.95, chart_title='Historical 
         return _plot_none(chart_title=chart_title, width=width, height=height)
     
     else:
+        df = _ffill(df)
         var = df.pct_change().rolling(window=window, min_periods=window).quantile(1-conf)*_np.sqrt(forward)
         hover = _chart_format_dict['Percent'][0]
         yformat = _chart_format_dict['Percent'][1]
@@ -178,8 +183,9 @@ def plot_esfall(df=None, window=21, conf=0.95, chart_title='Expected Shortfall (
         return _plot_none(chart_title=chart_title, width=width, height=height)
     
     else:
+        df = _ffill(df)
         # Calculate Expected Shortfall for all assets
-        es = _pd.DataFrame(df).apply(lambda x: _calc_expected_shortfall(x,window=window,conf=conf))
+        es = df.apply(lambda x: _calc_expected_shortfall(x,window=window,conf=conf))
 
         hover = _chart_format_dict['Percent'][0]
         yformat = _chart_format_dict['Percent'][1]
@@ -203,6 +209,7 @@ def plot_correl(df=None, window=21, base=None, chart_title='Correlation', legend
         return _plot_none(chart_title=chart_title, width=width, height=height)
     
     else:
+        df = _ffill(df)
         # Calculate correlation for base vs all other assets and then remove the base asset col
         cor = df.pct_change().rolling(window).corr()[base].unstack().drop([base],axis=1)
 
@@ -229,7 +236,7 @@ def plot_hist(df=None, normal=False, normal_label=None, chart_title='Returns KDE
         return _plot_none(chart_title=chart_title, width=width, height=height)
     
     else:
-        
+        df = _ffill(df)
         labels = list(df.columns)
         data = [df[i].dropna().pct_change().dropna() for i in labels]
 
@@ -265,6 +272,7 @@ def _plot_scatter(df=None, chart_title='Returns-Volatility Plot', legend=True, t
         return _plot_none(chart_title=chart_title, width=width, height=height)
     
     else:
+        df = _ffill(df)
         fig = ''
 
         # Show or return the plot
@@ -281,8 +289,9 @@ def plot_cmx(df=None, chart_title='Correlation matrix', colorbar=False, to_retur
         return _plot_none(chart_title=chart_title, width=width, height=height)
     
     else:
+        df = _ffill(df)
+
         # This will hide the upper triangle of the table
-        
         ret = df.pct_change().dropna()
         cor = ret.corr()
         cor = cor.mask(_np.tril(cor.values,-1)==0)
@@ -330,6 +339,7 @@ def plot_alloc_hist(df=None, chart_title='Portfolio Historical Allocation', lege
         return _plot_none(chart_title=chart_title, width=width, height=height)
     
     else:
+        
         yformat = _chart_format_dict['Percent'][1]
 
         fig = _px.area(df, template = _charts_template, color_discrete_sequence=_cool_colors)
@@ -452,6 +462,9 @@ def plot_barchart(df, sort_by='1-yr', chart_title='Cum. Returns', show_range=Tru
         fig = _px.bar(df, x=df.index, y=df[sort_by], template=_charts_template,
                      color='segment',  color_discrete_sequence=_cool_colors[1:], hover_data=['name','segment'])
         
+        # Remove white border from bars
+        fig = fig.update_traces(marker_line_width=0, selector=dict(type="bar"))
+        
         # Adjust title if period is "custom"
         if show_range:
             if sort_by=='Custom':
@@ -557,4 +570,7 @@ def _add_space(df, fig):
     return fig
 
 # --------------------------------------------------------------------------------------------
-
+def _ffill(df):
+    """ """
+    df = _pd.DataFrame(df).ffill().copy()
+    return df

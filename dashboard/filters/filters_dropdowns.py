@@ -1,5 +1,5 @@
 from dash import dcc
-
+from ..hconn import sec_list
 
 # --------------------------------------------------------------------------------------------------------------
 dropdown_time_period_port = dcc.Dropdown(options=[
@@ -29,3 +29,14 @@ dropdown_time_period_assets = dcc.Dropdown(options=dropdown_time_period_assets_o
                                            value='1-wk',multi=False,clearable=False,
                                            id='dropdown_time_period_assets'
                         )
+
+# --------------------------------------------------------------------------------------------------------------
+
+dropdown_securities_list_options = list(map(lambda x: {'label': x[1][0] + ': ' + x[1][1], 'value': x[1][0]}, 
+                                            sec_list.sort_values(by='symbol').iterrows()))
+
+
+dropdown_securities_list = dcc.Dropdown(options=dropdown_securities_list_options,value='SWDA',
+                                        multi=True,clearable=True,searchable=True,id='dropdown_securities_list'
+                                        )
+
