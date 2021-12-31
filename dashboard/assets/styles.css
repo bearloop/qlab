@@ -305,7 +305,7 @@ body {
 
 /*------------------------------------------------------------------------------*/
 /*Custom table css*/
-#custom-table-transactions, #custom-table-fund-details, #custom-table-stats{
+#custom-table-transactions, #custom-table-fund-details, #custom-table-stats, #custom-table-assets-view{
   background-color: transparent;
   margin: 2% ;
   padding: 2%;
@@ -350,6 +350,7 @@ body {
   font-size: 8.5pt;
   color: #272727;
 }
+
 /*------------------------------------------------------------------------------*/
 /*Customise dropdown*/
 .dash-dropdown{

@@ -5,6 +5,7 @@ from datetime import datetime as _datetime
 import plotly.figure_factory as _ff
 from datetime import timedelta as _timedelta
 import plotly.express as _px
+import scipy.stats as _stats
 from ._utilities import _calc_expected_shortfall
 
 _cool_colors = ["#001219","#005f73","#0a9396","#94d2bd",
@@ -243,8 +244,8 @@ def plot_hist(df=None, normal=False, normal_label=None, chart_title='Returns KDE
         if normal:
             mu = df[normal_label].dropna().pct_change().mean()
             sd = df[normal_label].dropna().pct_change().std()
-            norm_dist = _pd.Series([_np.random.normal(loc=mu, scale=sd) for k in range(2000)])
-            labels.append('NORM (MU: ' + str(round(mu*100,1))+'% - SD:' + str(round(sd*100,1))+'%)')
+            norm_dist = _pd.Series(_stats.norm.rvs(size=20000,loc=mu,scale=sd))
+            labels.append('NORM (MU: ' + str(round(mu*100,2))+'%, SD: ' + str(round(sd*100,2))+'%)')
             data.append(norm_dist)
 
         hover = _chart_format_dict['Density'][0]

@@ -5,6 +5,7 @@ import pandas as pd
 from ..utils import navbar
 from ..hconn import pdt, data_assets_cum_ret, data_assets_ann_ret, data_assets_ann_vol
 from ..cards import cards_plots as cp
+from ..cards import cards_tables as ct
 from dash.dependencies import Input, Output, State
 from ..app import app
 from ..filters.filters_dropdowns import dropdown_time_period_assets_options
@@ -23,6 +24,7 @@ card_assets_risk = cp.card_risk(pdt['SWDA'], card_title='Assets Risk Annualised'
 
 card_assets_ddown = cp.card_drawdown(pdt['SWDA'], dropna=True, legend=True)
 
+card_assets_info = ct.card_table_assets_stats(assets_list=['SWDA'])
 
 def create_layout_2():
 
@@ -40,7 +42,10 @@ def create_layout_2():
                          dbc.Col([card_assets_risk],width=6, id='assets_risk')],class_name='p-4'),
                 
                 # Drawdown
-                dbc.Row([dbc.Col([card_assets_ddown],width=8, id='assets_ddown')],class_name='p-4'),
+                dbc.Row([dbc.Col([card_assets_ddown],width=12, id='assets_ddown')],class_name='p-4'),
+
+                # Asset stats table
+                dbc.Row([dbc.Col([card_assets_info],width=12, id='assets_info')],class_name='p-4'),
 
             ],className='my-page-container')
 
@@ -190,9 +195,25 @@ def update_values(value, eop, sop):
         return out
     except Exception as e:
         print('Failed attempt to update list (line plot)', e.args)
-        out = [cp.card_drawdown(None, card_title='Assets Risk Annualised')]
+        out = [cp.card_drawdown(None)]
         return out
 
+# -------------------
+# Update assets info table
+@app.callback(
+    [Output('assets_info','children')],
+    [Input("dropdown_securities_list", "value"),
+     Input("date-picker-range", "end_date"),
+     Input("date-picker-range", "start_date")]
+)
+def update_values(value, eop, sop):
+    try:
+        out = [ct.card_table_assets_stats(assets_list=value,start_date=sop,end_date=eop)]
+        return out
+    except Exception as e:
+        print('Failed attempt to update list (line plot)', e.args)
+        out = [ct.card_table_assets_stats(assets_list=None)]
+        return out
 
 # ---------------------------------------------------------------------------------
 # ---------------------------------------------------------------------------------

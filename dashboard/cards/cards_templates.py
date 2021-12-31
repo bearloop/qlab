@@ -63,7 +63,7 @@ def card_table(table, card_title='Bla Bla', card_sub_title=''):
     )
 
 # --------------------------------------------------------------------------------------------------------------
-def card_table_test(table1, table2, table3, card_title='Bla Bla', card_sub_title=''):
+def card_table(table1, table2, table3, card_title='Bla Bla', card_sub_title=''):
 
     tabs = dcc.Tabs(
                     [
@@ -84,6 +84,29 @@ def card_table_test(table1, table2, table3, card_title='Bla Bla', card_sub_title
                 )
         ], class_name="h-100"
     )
+
+# --------------------------------------------------------------------------------------------------------------
+def card_table_assets_view(table, card_title='Bla Bla', card_sub_title=''):
+
+    tabs = dcc.Tabs(
+                    [
+                      dcc.Tab(label='', children=[table]),
+                      dcc.Tab(label='', children=[table]),
+                    ]
+                   )
+
+    return dbc.Card(
+        [
+            dbc.CardHeader(
+                html.Div([html.H3(card_title,className="header-title"),
+                html.P(card_sub_title,className="header-subtitle")])
+                ),
+            dbc.CardBody(
+                [tabs]
+                )
+        ], class_name="h-100"
+    )
+
 # --------------------------------------------------------------------------------------------------------------
 def update_background(fig):
 

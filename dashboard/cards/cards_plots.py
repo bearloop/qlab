@@ -32,7 +32,7 @@ def card_performance(data, card_title='Portfolio Performance', dropna=False, leg
     figure = vs.plot_line(data, rebase=True, chart_title='', legend=legend, to_return=True)
     figure = update_background(figure)
 
-    card = card_template(figure=figure, card_title=card_title)
+    card = card_template(figure=figure, card_title=card_title, card_sub_title='Rebased at period start')
 
     return card
 
@@ -120,15 +120,19 @@ def card_cmx(data, card_title='Correlation Matrix'):
 # --------------------------------------------------------------------------------------------------------------
 def card_drawdown(data, card_title='Historical Price Drawdown', dropna=False, legend=False):
 
-    if dropna:
-        data = data.dropna().copy()
+    if data is not None:
+        if dropna:
+            data = data.dropna().copy()
+        subtitle = 'Drawdown over: ' + get_period(data)
+    else:
+        subtitle = 'N/A'
 
     figure = vs.plot_ddown(data, chart_title='', legend=legend, to_return=True)
     figure = update_background(figure)
-    subtitle = get_period(data)
+        
     card = card_template(figure=figure,
                          card_title=card_title,
-                         card_sub_title='Drawdown over: ' + subtitle)
+                         card_sub_title=subtitle)
 
     return card
 
