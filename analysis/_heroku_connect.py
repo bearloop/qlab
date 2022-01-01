@@ -255,8 +255,8 @@ class HerokuDB:
         if portfolio:
                 port = Portfolio(heroku_conn=self).fetch_data()
                 results = _pd.concat([results, port['PORT']],axis=1)
-
-        return results
+        
+        return results.ffill()
 
     # --------------------------------------------------------------------------------------------
     def insert_new_asset(self, dg_search_result=None, asset=None, asset_segment=None, ft_suffix=None, dg=None):

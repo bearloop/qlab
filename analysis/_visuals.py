@@ -202,7 +202,53 @@ def plot_esfall(df=None, window=21, conf=0.95, chart_title='Expected Shortfall (
             return fig  
 
 # --------------------------------------------------------------------------------------------
-def plot_correl(df=None, window=21, base=None, chart_title='Correlation', legend=True, to_return=False, width=720, height=360):
+
+def plot_beta(df=None, market=None, window=21, chart_title='Returns Beta', legend=True, to_return=False, width=720, height=360):
+    """
+    Plots the returns beta of assets in the DataFrame against the "market asset" on a rolling basis over the window period.
+    """
+    if (df is None) or (market is None): 
+        return _plot_none(chart_title=chart_title, width=width, height=height)
+    
+    else:
+        df = _ffill(df)
+
+        def _func_beta(df, asset, market, window=window):
+            """
+            Beta Asset = Covariance(Asset, Market) / Variance(Market) .. or..
+            Beta Asset = Correlation(Asset, Market) * [ Vol(Asset) / Vol(market) ]
+            """
+            # Calculate asset - market returns covariance
+            covar_asset_market = df[[asset,market]].pct_change().rolling(window).cov()[asset].unstack()[market]
+            
+            # Calculate market returns variance
+            market_variance = df[market].pct_change().rolling(window).var()
+            
+            return covar_asset_market / market_variance
+        
+        beta = _pd.DataFrame()
+        for asset in df.columns:
+            if asset!=market:
+                beta[asset] = _func_beta(df=df, asset=asset,market=market,window=window)
+        
+        hover = _chart_format_dict['Value_2f'][0]
+        yformat = _chart_format_dict['Value_2f'][1]
+
+        if chart_title!='':
+            chart_title = chart_title + ' vs ' + market
+
+        fig = _template_line(beta, chart_title=chart_title, legend=legend, width=width, height=height, template=_charts_template
+                ).update_traces(hovertemplate=hover).update_yaxes(tickformat=yformat)
+
+        # Show or return the plot
+        if to_return==False:
+            fig.show()
+        
+        else:
+            return fig
+
+# --------------------------------------------------------------------------------------------
+def plot_correl(df=None, base=None, window=21, chart_title='Correlation', legend=True, to_return=False, width=720, height=360):
     """
     Plots the correlation of the base asset and every other asset on a rolling basis over the window period.
     """
