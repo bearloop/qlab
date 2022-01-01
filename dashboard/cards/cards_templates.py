@@ -48,7 +48,7 @@ def card_template_treemap(figure, card_title='Bla Bla', card_sub_title=''):
     )
 
 # --------------------------------------------------------------------------------------------------------------
-def card_table(table, card_title='Bla Bla', card_sub_title=''):
+def card_table_single(table, card_title='Bla Bla', card_sub_title=''):
 
     return dbc.Card(
         [
@@ -63,7 +63,7 @@ def card_table(table, card_title='Bla Bla', card_sub_title=''):
     )
 
 # --------------------------------------------------------------------------------------------------------------
-def card_table(table1, table2, table3, card_title='Bla Bla', card_sub_title=''):
+def card_table_triple(table1, table2, table3, card_title='Bla Bla', card_sub_title=''):
 
     tabs = dcc.Tabs(
                     [

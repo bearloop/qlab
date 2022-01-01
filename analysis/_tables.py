@@ -132,6 +132,9 @@ def table_securities_stats(df):
         data_df.loc['Skewness',sec] = prices.pct_change().skew()[0]
         data_df.loc['Kurtosis',sec] = prices.pct_change().kurt()[0]
 
+        # Sharpe ratio (risk-free = 0)
+        data_df.loc['Sharpe',sec] = data_df.loc['Mean Ret',sec]*(12*month) / (data_df.loc['Stand Dev',sec]*(_np.sqrt(12*month)))
+
         # Calculate returns
         data_df.loc['Rt-1d',sec] = prices.pct_change().iloc[-1][0]
         data_df.loc['Rt-1wk',sec] = prices.pct_change(week).iloc[-1][0]
@@ -157,7 +160,7 @@ def table_securities_stats(df):
     labels_1p = ['Rt-1yr','CAGR','Mean-1yr','Vol-1yr','Drawdown','Max Drawdown']
     data_df[labels_1p] = (data_df[labels_1p]*100).applymap('{:,.1f}%'.format)
 
-    labels_2f = ['Skewness','Kurtosis']
+    labels_2f = ['Skewness','Kurtosis', 'Sharpe']
     data_df[labels_2f] = (data_df[labels_2f]).applymap('{:,.2f}'.format)
 
     return data_df

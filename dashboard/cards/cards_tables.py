@@ -1,5 +1,5 @@
 from ...analysis import _tables as tab
-from .cards_templates import  card_table
+from .cards_templates import  card_table_triple, card_table_single
 from dash import dash_table
 from dash.dash_table.Format import Format, Scheme
 import pandas as _pd
@@ -96,7 +96,7 @@ def card_table_portfolio_holdings_summary(db):
     table1, assets_list = table_portfolio_holdings_transactions(db)
     table2 = table_portfolio_fund_details(assets_list=assets_list, db=db)
     table3 = table_portfolio_stats(assets_list=assets_list, start_date='25-03-2020')
-    card = card_table(table1=table1, table2=table2, table3=table3, card_title='Portfolio Holdings Summary')
+    card = card_table_triple(table1=table1, table2=table2, table3=table3, card_title='Portfolio Holdings Summary')
 
     return card
 
@@ -106,8 +106,6 @@ def card_table_portfolio_holdings_summary(db):
 def card_table_assets_stats(assets_list, start_date=None, end_date=None):
 
     if assets_list is not None:
-    
-        # assets_list.append('PORT')
 
         df = _pd.DataFrame(pdt[assets_list]).copy()
         
@@ -119,7 +117,6 @@ def card_table_assets_stats(assets_list, start_date=None, end_date=None):
 
         table = tab.table_securities_stats(df)
         table = _pd.concat([_pd.DataFrame(table.index.values,index=table.index,columns=['Symbol']),table],axis=1)
-        # format_cell['width']='50px'
         
         cols = [{'id':i,'name':i} for i in table.columns]
 
@@ -134,8 +131,9 @@ def card_table_assets_stats(assets_list, start_date=None, end_date=None):
     else:
         table_assets = None
     
-    card = card_table(table1=table_assets, table2=None, table3=None,
-                      card_title='Assets Stats', card_sub_title='Return-risk profile of selected assets')
+    card = card_table_single(table=table_assets,
+                             card_title='Assets Stats',
+                             card_sub_title='Return-risk profile of selected assets')
 
     return card
 # --------------------------------------------------------------------------------------------------------------
