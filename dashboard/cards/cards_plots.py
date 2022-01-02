@@ -47,12 +47,27 @@ def card_port_returns(data, period='day', card_title='Portfolio Returns'):
     return card
 
 # --------------------------------------------------------------------------------------------------------------
-def card_port_histogram(data, normal=True, normal_label='PORT', card_title='Portfolio Returns KDE'):
+def card_histogram(data, normal=True, normal_label='PORT', card_title='Portfolio Returns KDE', legend=False):
     
-    figure = vs.plot_hist(data, normal=normal, normal_label=normal_label, chart_title='', legend=False, to_return=True)
+    figure = vs.plot_hist(data, normal=normal, normal_label=normal_label, chart_title='', legend=legend, to_return=True)
     figure = update_background(figure)
 
     card = card_template(figure=figure, card_title=card_title)
+
+    return card
+
+# --------------------------------------------------------------------------------------------------------------
+def card_beta(data, market='PORT', window=21, card_title='Asset returns beta relative to', dropna=False, legend=False):
+    
+    if dropna:
+        data = data.dropna().copy()
+
+    figure = vs.plot_beta(data, market=market, window=window, chart_title='', legend=legend, to_return=True)
+    figure = update_background(figure)
+
+    card = card_template(figure=figure,
+                         card_title=card_title + market,
+                         card_sub_title='Lookback period = {} days'.format(str(window)))
 
     return card
 
@@ -70,7 +85,6 @@ def card_risk(data, window=21, card_title='Portfolio Risk Annualised', dropna=Fa
                          card_sub_title='Lookback period = {} days'.format(str(window)))
 
     return card
-
 # --------------------------------------------------------------------------------------------------------------
 def card_var(data, window=21, forward=21, conf=0.95, card_title='Portfolio Value at Risk'):
     

@@ -1,4 +1,5 @@
 import datetime
+from re import S
 import dash_bootstrap_components as dbc
 from dash import html
 import pandas as pd
@@ -22,6 +23,12 @@ card_assets_performance = cp.card_performance(pdt['SWDA'],
 card_assets_risk = cp.card_risk(pdt['SWDA'], card_title='Assets Risk Annualised',
                                 window=63, dropna=True, legend=True)
 
+# card_assets_beta = cp.card_beta(pdt['SWDA'], card_title='Assets Risk Annualised',
+#                                 window=63, dropna=True, legend=True)
+
+card_assets_kde = cp.card_histogram(pdt['SWDA'], normal=False, normal_label=None, card_title='Asset Returns KDE', legend=True)
+
+
 card_assets_ddown = cp.card_drawdown(pdt['SWDA'], dropna=True, legend=True)
 
 card_assets_info = ct.card_table_assets_stats(assets_list=['SWDA'])
@@ -43,6 +50,9 @@ def create_layout_2():
                 
                 # Drawdown
                 dbc.Row([dbc.Col([card_assets_ddown],width=12, id='assets_ddown')],class_name='p-4'),
+
+                # Histogram
+                dbc.Row([dbc.Col([card_assets_kde],width=6, id='assets_hist')],class_name='p-4'),
 
                 # Asset stats table
                 dbc.Row([dbc.Col([card_assets_info],width=12, id='assets_info')],class_name='p-4'),
@@ -176,8 +186,26 @@ def update_values(value, eop, sop):
         out = [cp.card_risk(df, card_title='Assets Risk Annualised', window=63, legend=True)]
         return out
     except Exception as e:
-        print('Failed attempt to update list (line plot)', e.args)
+        print('Failed attempt to update list (vol plot)', e.args)
         out = [cp.card_risk(None, card_title='Assets Risk Annualised')]
+        return out
+
+# -------------------
+# Update hist chart
+@app.callback(
+    [Output('assets_hist','children')],
+    [Input("dropdown_securities_list", "value"),
+     Input("date-picker-range", "end_date"),
+     Input("date-picker-range", "start_date")]
+)
+def update_values(value, eop, sop):
+    try:
+        df = custom_dates(start=sop,end=eop,asset_list=value)
+        out = [cp.card_histogram(df, normal=False, normal_label=None, card_title='Asset Returns KDE', legend=True)]
+        return out
+    except Exception as e:
+        print('Failed attempt to update list (histogram plot)', e.args)
+        out = [cp.card_histogram(None, normal=False, normal_label=None, card_title='Asset Returns KDE')]
         return out
 
 # -------------------
@@ -194,7 +222,7 @@ def update_values(value, eop, sop):
         out = [cp.card_drawdown(df, legend=True)]
         return out
     except Exception as e:
-        print('Failed attempt to update list (line plot)', e.args)
+        print('Failed attempt to update list (drawdown plot)', e.args)
         out = [cp.card_drawdown(None)]
         return out
 
@@ -211,7 +239,7 @@ def update_values(value, eop, sop):
         out = [ct.card_table_assets_stats(assets_list=value,start_date=sop,end_date=eop)]
         return out
     except Exception as e:
-        print('Failed attempt to update list (line plot)', e.args)
+        print('Failed attempt to update list (assets table stats)', e.args)
         out = [ct.card_table_assets_stats(assets_list=None)]
         return out
 

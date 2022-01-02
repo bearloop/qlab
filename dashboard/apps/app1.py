@@ -9,13 +9,14 @@ from ..app import app
 
 card_port_performance = cp.card_performance(data_port)
 card_port_returns = cp.card_port_returns(data_port,period='day')
-card_port_kde = cp.card_port_histogram(data_port)
+card_port_kde = cp.card_histogram(data_port)
 card_port_alloc_hist = cp.card_portfolio_alloc_hist(data_wei_hist)
 card_port_alloc_last = cp.card_portfolio_alloc_last(data_wei_last)
+card_port_beta = cp.card_beta(data_cmx, market='PORT', window=42, legend=True)
 card_port_risk = cp.card_risk(data_port, window=42)
 card_port_var = cp.card_var(data_port, window=42, forward=21, conf=0.95)
 card_port_esfall = cp.card_exp_shortfall(data_port, window=42, conf=0.95)
-card_port_ddown = cp.card_drawdown(data_cmx)
+card_port_ddown = cp.card_drawdown(data_cmx,legend=True)
 card_correl_matrix = cp.card_cmx(data_cmx)
 card_correl_rolling = cp.card_correl(data_cmx, window=42, base='PORT', legend=True)
 card_port_holdings = ct.card_table_portfolio_holdings_summary(db)
@@ -47,7 +48,8 @@ def create_layout_home():
                          dbc.Col([card_correl_rolling],width=6,id='port_correl')],class_name='p-4'),
                 
                 # Drawdown
-                dbc.Row([dbc.Col([card_port_ddown], width=12, id='port_ddown')], class_name='p-4')
+                dbc.Row([dbc.Col([card_port_ddown], width=6, id='port_ddown'),
+                         dbc.Col([card_port_beta], width=6, id='port_beta')], class_name='p-4')
 
             ],className='my-page-container')
 
@@ -94,8 +96,19 @@ def update_values(value):
     
     out = [cp.card_port_returns(data_port,period=marks[value])]
     return out
+    
 # ---------------------------------------------------------------------------------
 # ---------------------------------------------------------------------------------
+# Portfolio beta graph
+@app.callback(
+    [Output('port_beta','children')],
+    [Input('slider_lookback_days_port','value')]
+)
+def update_values(value):
+    out = [cp.card_beta(data_cmx, market='PORT', window=value, legend=True)]
+    return out
+
+# ---------------------
 # Portfolio risk graph
 @app.callback(
     [Output('port_risk','children')],
