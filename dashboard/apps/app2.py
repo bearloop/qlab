@@ -1,5 +1,4 @@
 import datetime
-from re import S
 import dash_bootstrap_components as dbc
 from dash import html
 import pandas as pd
@@ -274,13 +273,12 @@ def set_date_range_for_securities(value):
         ind = pdt[value].dropna(how='all').index
         start_date = ind[0]
         end_date = ind[-1]
-        # print('entered set date range - success', value)
-        # return max allowed and end date + min allowed and start date
+        
         return end_date, end_date, start_date, start_date
     except:
         start_date = datetime.today() - timedelta(days=21)
         end_date = datetime.today()
-        # print('entered set date range - failure', value)
+        
         return end_date, end_date, start_date, start_date
 
 
@@ -291,9 +289,8 @@ def custom_dates(start, end, asset_list):
     try:
         
         df = pd.DataFrame(pdt[asset_list].dropna(how='all')).loc[start:end,:].copy()
-        # print('entered custom date range - success')
+        
         return df
     except Exception as e:
-        # print('entered custom date range - failure')
-        # print('Failed attempt to change date range', e.args, start, end, asset_list)
+        
         return pdt[asset_list].dropna(how='all')

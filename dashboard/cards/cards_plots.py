@@ -66,7 +66,7 @@ def card_beta(data, market='PORT', window=21, card_title='Asset returns beta rel
     figure = update_background(figure)
 
     card = card_template(figure=figure,
-                         card_title=card_title + market,
+                         card_title=card_title + ' ' + market,
                          card_sub_title='Lookback period = {} days'.format(str(window)))
 
     return card
