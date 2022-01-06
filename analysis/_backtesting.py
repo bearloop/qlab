@@ -224,7 +224,9 @@ class BackTest:
     # ---------------------------------------------------------------------------------------------------
     def evaluate_strategy(self, prices_df, signals_df, verbose=True):
         """
-        Strategy evaluation based on asset prices and signals.
+        Strategy evaluation based on asset prices and signals. Signal is translated to weight on the date
+        the strategy rebalances but afterwards it behaves as a buy and hold strategy until the next rebalancing
+        date (the SIG_ASSET columns instead show fixed weights but do not get confused by that).
         prices_df: a dataframe with asset prices.
         signals_df: a dataframe with boolean values indicating whether every asset is held or not at
                     any given time.
@@ -259,6 +261,10 @@ class BackTest:
         start_date = signals_df[signals_df['CNT']>0].index[0]
         df = df.loc[start_date:,:]
         
+        # Drop rows that don't have at least one transaction price. this tries to fix the issue that appears..
+        # ..when there's an imbalance between value and transaction prices as well as signals and transaction prices
+        # df = df[df[trp_df.columns].notnull().any(axis=1)]
+
         # Add an origin date at the start of the df and set units, net purchases, cash and value
         origin = _pd.DataFrame(index=[df.index[0]-timedelta(1)],columns = df.columns, data=_np.NaN)
         origin[['VALUE','CASH']] = self._initial_capital
