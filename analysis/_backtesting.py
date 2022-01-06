@@ -10,6 +10,7 @@ class BackTest:
         self._initial_capital = initial_capital 
         self._flat_fee = flat_fee
         self._percentage_fee = percentage_fee
+
     # ---------------------------------------------------------------------------------------------------
     def _calc_target_units(self, units_t1, units_t0=None):
         """
@@ -76,11 +77,11 @@ class BackTest:
         return current_cash +self._calc_portfolio_value(valuation_prices=valuation_prices, assets_units=assets_units)
 
     # ---------------------------------------------------------------------------------------------------
-    def _check_cash_balance(self, transaction_prices, cash, units_suggested, units_old=None):
+    def _check_cash_balance(self, transaction_prices, cash, units_suggested, units_prev=None):
         
         # If previous unit set is missing then the assets had not been held
-        if units_old is None:
-            units_old = [0 for i in units_suggested]
+        if units_prev is None:
+            units_prev = [0 for i in units_suggested]
         
         # Variable dictionary to hold "new units"
         units_new = {}
@@ -100,7 +101,7 @@ class BackTest:
             constraints.append(units_new[i]<=units_suggested[i])
 
         # Expression to minimize: [ cash - (net purchases) ], if net purchases are negative then the sum is sure > 0
-        exp = cash -cp.sum([transaction_prices[ind] * (units_new[ind] - units_old[ind]) for ind in units_new.keys()])
+        exp = cash -cp.sum([transaction_prices[ind] * (units_new[ind] - units_prev[ind]) for ind in units_new.keys()])
 
         # Extra constraint of [ cash - (net purchases) must be >= zero ]
         constraints.append(exp >= 0)                           
@@ -154,14 +155,14 @@ class BackTest:
             
             # Otherwise, since there's at least one asset signal that's changed (diff from previous date), recalculate all units
             else:
-                initial_units = self._calc_units_based_on_weights(transaction_prices=trp,
+                units_proposed = self._calc_units_based_on_weights(transaction_prices=trp,
                                                                   weights=wei,
                                                                   capital=df.loc[previous_date,'VALUE'])
                 
                 df.loc[current_date,units_cols] = self._check_cash_balance(transaction_prices=trp,
                                                                            cash=df.loc[previous_date,'CASH'],
-                                                                           units_suggested = initial_units,
-                                                                           units_old = df.loc[previous_date,units_cols])
+                                                                           units_suggested = units_proposed,
+                                                                           units_prev = df.loc[previous_date,units_cols])
             
             # Auxiliery arguments: current date units, previous date units and previous date cash balance
             units_t1 = df.loc[current_date,units_cols]
@@ -191,10 +192,13 @@ class BackTest:
 
     # ---------------------------------------------------------------------------------------------------
     def _calc_fees(self, df):
-    
+        """
+        Calculate strategy fees based on the number and value of every transaction that has taken place
+        over the course of the strategy.
+        """
         df = df.copy()
-        
-        # Units per asset df
+
+        # Units held per asset df
         units_cols = [i for i in df.columns if 'UNT_' in i] 
         units_df = df[units_cols].diff().copy()
         units_df.columns = [i[4:] for i in units_df.columns]
@@ -205,10 +209,14 @@ class BackTest:
         tpr_df.columns = [i[4:] for i in tpr_df.columns]
         
         # Fees calculation considering every transaction (purchase or sale of assets)
+
+        # Percentage fees calculation: absolute value of rebalancing * percentage fee
         df['PCT_FEES'] = abs(units_df.mul(tpr_df)*(self._percentage_fee)).sum(axis=1)
         
+        # Flat fees calculation: purchase / sale of an asset * flat fee
         df['FLAT_FEES'] = ((units_df.mul(tpr_df).fillna(0)!=0)*self._flat_fee).sum(axis=1)
         
+        # Sum of fees
         df['TOTAL_FEES'] = df[['PCT_FEES','FLAT_FEES']].sum(axis=1)
         
         return df
@@ -217,6 +225,9 @@ class BackTest:
     def evaluate_strategy(self, prices_df, signals_df, verbose=True):
         """
         Strategy evaluation based on asset prices and signals.
+        prices_df: a dataframe with asset prices.
+        signals_df: a dataframe with boolean values indicating whether every asset is held or not at
+                    any given time.
         """
         # Copy so as not to change the original df
         prices_df = prices_df.copy()
@@ -261,96 +272,12 @@ class BackTest:
         df = self._calc_strat(df=df, asset_names=assets_names)
         
         # Calculate fees
-        df = self._calc_fees(df)
-        
+        df = self._calc_fees(df=df)
+
         if verbose:
             return df.copy()
         else: 
-            return df[assets_names + labels].copy()
+            # Return only asset prices, asset units, net purchases, cash balance, fees and value
+            columns = assets_names + labels + ['PCT_FEES','FLAT_FEES','TOTAL_FEES']
+            return df[ columns ].copy()
     # ---------------------------------------------------------------------------------------------------
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    # ---------------------------------------------------------------------------------------------------
-    # def _calc_strat(self, df, vlp_cols):
-    #     """
-        
-    #     """
-    #     # Lists of assets by category: weight, units, transaction price, value price
-    #     weight_cols = [i for i in df.columns if 'SIG_' in i]
-    #     units_cols = [i for i in df.columns if 'UNT_' in i]
-    #     trp_cols = [i for i in df.columns if 'TRP_' in i]
-        
-
-    #     first_valid_date = True
-
-    #     for i in df.index:
-
-    #         trp = list(df.loc[i,trp_cols].replace(_np.NaN,0))
-    #         vp = list(df.loc[i,vlp_cols].replace(_np.NaN,0))
-    #         wei = list(df.loc[i,weight_cols])
-
-    #         # If date is the date the strategy begins i.e. enters at least one long position
-    #         if first_valid_date:
-                
-    #             #..calculate units based on starting capital (self._initial_capital)
-    #             df.loc[i, units_cols] = self._calc_units_based_on_weights(transaction_prices=trp,
-    #                                                                       weights=wei,
-    #                                                                       capital=self._initial_capital)
-    #             # Auxiliery arguments
-    #             units_t1 = df.loc[i,units_cols]
-    #             units_t0 = None
-    #             starting_cash = self._initial_capital
-    #             first_valid_date = False
-
-    #         # Otherwise you must use the previous date's value
-    #         else:
-    #             if list(df.loc[previous_date,weight_cols]) == list(df.loc[i,weight_cols]):
-            
-    #                 df.loc[i,units_cols] = df.loc[previous_date,units_cols]
-                    
-    #             else:
-    #                 initial_units = self._calc_units_based_on_weights(transaction_prices=trp,
-    #                                                                 weights=wei,
-    #                                                                 capital=df.loc[previous_date,'VALUE'])
-                    
-    #                 df.loc[i,units_cols] = self._check_cash_balance(transaction_prices=trp,
-    #                                                                 cash=df.loc[previous_date,'CASH'],
-    #                                                                 units_suggested = initial_units,
-    #                                                                 units_old = df.loc[previous_date,units_cols])
-    #             # Auxiliery arguments
-    #             units_t1 = df.loc[i,units_cols]
-    #             units_t0 = df.loc[previous_date,units_cols]
-    #             starting_cash = df.loc[previous_date,'CASH']
-                
-    #         # Subtract previous date's units from current date's and use the diffence to calc net purchases
-    #         diff_in_units = self._calc_target_units(units_t1=units_t1, units_t0=units_t0)
-
-    #         # Add net purchases
-    #         df.loc[i,'NET_PURCHASES'] = self._calc_net_purchases(transaction_prices=trp, assets_units=diff_in_units)
-
-    #         # Add cash value
-    #         df.loc[i,'CASH'] = self._calc_cash_balance(previous_cash=starting_cash, cost=df.loc[i,'NET_PURCHASES'])
-            
-    #         # Add the sum of the portfolio and cash value
-    #         df.loc[i,'VALUE'] = self._calc_total_value(valuation_prices=vp, assets_units=units_t1,
-    #                                                    current_cash=df.loc[i,'CASH'])
-                
-    #         # Keep previous date to use in the next iteration
-    #         previous_date = i
-
-    #     return df
