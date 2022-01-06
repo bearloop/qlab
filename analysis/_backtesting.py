@@ -220,7 +220,28 @@ class BackTest:
         df['TOTAL_FEES'] = df[['PCT_FEES','FLAT_FEES']].sum(axis=1)
         
         return df
+    # ---------------------------------------------------------------------------------------------------
+    def calc_weights(self, df):
+        """
+        Calculate actual strategy asset weights.
+        """
+        df = df.copy()
 
+        # Units held per asset df
+        units_cols = [i for i in df.columns if 'UNT_' in i] 
+        units_df = df[units_cols].copy()
+        units_df.columns = [i[4:] for i in units_df.columns]
+        
+        # Valuation prices df
+        valuation_df = df[units_df.columns].copy()
+
+        # Weights
+        weights_df = valuation_df.mul(units_df)
+        weights_df['CASH'] = df['CASH']
+        weights_df = weights_df.div(df['VALUE'],axis=0)
+        
+        return weights_df
+        
     # ---------------------------------------------------------------------------------------------------
     def evaluate_strategy(self, prices_df, signals_df, verbose=True):
         """
@@ -265,10 +286,6 @@ class BackTest:
         # Find first date where signal is positive for at least one asset
         start_date = signals_df[signals_df['CNT']>0].index[0]
         df = df.loc[start_date:,:]
-        
-        # Drop rows that don't have at least one transaction price. this tries to fix the issue that appears..
-        # ..when there's an imbalance between value and transaction prices as well as signals and transaction prices
-        # df = df[df[trp_df.columns].notnull().any(axis=1)]
 
         # Add an origin date at the start of the df and set units, net purchases, cash and value
         origin = _pd.DataFrame(index=[df.index[0]-timedelta(1)],columns = df.columns, data=_np.NaN)
