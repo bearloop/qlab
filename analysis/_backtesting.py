@@ -227,9 +227,14 @@ class BackTest:
         Strategy evaluation based on asset prices and signals. Signal is translated to weight on the date
         the strategy rebalances but afterwards it behaves as a buy and hold strategy until the next rebalancing
         date (the SIG_ASSET columns instead show fixed weights but do not get confused by that).
-        prices_df: a dataframe with asset prices.
-        signals_df: a dataframe with boolean values indicating whether every asset is held or not at
-                    any given time.
+        
+        Arguments:
+        ----------
+        prices_df: A dataframe with asset prices.
+        signals_df: A dataframe with boolean values indicating whether every asset is held or not at
+                    any given time. Should be shifted at least by 1 day (i.e. if the strategy includes
+                    an asset on end-of-day July 1st, then the strategy buys it on the next day, hence shift
+                    the signal by 1 day).
         """
         # Copy so as not to change the original df
         prices_df = prices_df.copy()
