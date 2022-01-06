@@ -1,3 +1,4 @@
+from datetime import timedelta
 import pandas as _pd
 import numpy as _np
 import cvxpy as cp
@@ -5,9 +6,10 @@ import math
 
 class BackTest:
 
-    def __init__(self, initial_capital=10000):
-        self._cash = initial_capital  
-
+    def __init__(self, initial_capital=10000, flat_fee=2.2, percentage_fee=0.1/100):
+        self._initial_capital = initial_capital 
+        self._flat_fee = flat_fee
+        self._percentage_fee = percentage_fee
     # ---------------------------------------------------------------------------------------------------
     def _calc_target_units(self, units_t1, units_t0=None):
         """
@@ -45,14 +47,14 @@ class BackTest:
         return assets_units
 
     # ---------------------------------------------------------------------------------------------------
-    def _calc_position_cost(self, transaction_prices, assets_units):
+    def _calc_net_purchases(self, transaction_prices, assets_units):
         """
-        Calculate position cost.
+        Calculate net purchases cost (if negative then this translates to net sales).
         """
         return round(sum(_np.array(transaction_prices) * _np.array(assets_units)),4)
 
     # ---------------------------------------------------------------------------------------------------
-    def _calc_cash_in_the_portfolio(self, previous_cash, cost):
+    def _calc_cash_balance(self, previous_cash, cost):
         """
         Calculate current cash position, given previous cash position (t_0) and any investments costs
         incurred / made.
@@ -68,10 +70,10 @@ class BackTest:
 
     # ---------------------------------------------------------------------------------------------------
     def _calc_total_value(self, valuation_prices, assets_units, current_cash):
-        
-        current_value = self._calc_portfolio_value(valuation_prices=valuation_prices, assets_units=assets_units)
-        
-        return current_value + current_cash
+        """
+        Calculate sum of cash and portfolio value
+        """
+        return current_cash +self._calc_portfolio_value(valuation_prices=valuation_prices, assets_units=assets_units)
 
     # ---------------------------------------------------------------------------------------------------
     def _check_cash_balance(self, transaction_prices, cash, units_suggested, units_old=None):
@@ -118,8 +120,111 @@ class BackTest:
         return non_negative_cash_balance_units
 
     # ---------------------------------------------------------------------------------------------------
-    def evaluate_strategy(self, prices_df, signals_df):
+    def _calc_strat(self, df, asset_names):
+        """
         
+        """
+        # Lists of assets by category: weight, units, transaction price, value price
+        weight_cols = [i for i in df.columns if 'SIG_' in i]
+        units_cols = [i for i in df.columns if 'UNT_' in i]
+        trp_cols = [i for i in df.columns if 'TRP_' in i]
+        vlp_cols = asset_names
+        
+        # We begin from the first date the portfolio enters a long position, so the start date..
+        # ..is the date before that
+        previous_date = df.index[0]
+
+        for current_date in df.index[1:]:
+            
+            # trp: transaction prices per asset on the current date
+            trp = list(df.loc[current_date,trp_cols].replace(_np.NaN,0))
+
+            # vp: valuation (end-of-day) prices per asset on the current date
+            vp = list(df.loc[current_date,vlp_cols].replace(_np.NaN,0))
+
+            # wei: signal translated into weights per asset on the current date..
+            # ...if the signal says two assets must be held, then their weights are 50% each
+            wei = list(df.loc[current_date,weight_cols])
+
+            # Check if the weights / signals have changed (i.e. you shouldn't act if there aren't any signal changes)..
+            # ..though the actual portfolio weights well vary of course
+            if list(df.loc[previous_date, weight_cols]) == list(df.loc[current_date, weight_cols]):
+        
+                df.loc[current_date,units_cols] = df.loc[previous_date,units_cols]
+            
+            # Otherwise, since there's at least one asset signal that's changed (diff from previous date), recalculate all units
+            else:
+                initial_units = self._calc_units_based_on_weights(transaction_prices=trp,
+                                                                  weights=wei,
+                                                                  capital=df.loc[previous_date,'VALUE'])
+                
+                df.loc[current_date,units_cols] = self._check_cash_balance(transaction_prices=trp,
+                                                                           cash=df.loc[previous_date,'CASH'],
+                                                                           units_suggested = initial_units,
+                                                                           units_old = df.loc[previous_date,units_cols])
+            
+            # Auxiliery arguments: current date units, previous date units and previous date cash balance
+            units_t1 = df.loc[current_date,units_cols]
+            units_t0 = df.loc[previous_date,units_cols]
+            starting_cash = df.loc[previous_date,'CASH']
+                
+            # Subtract previous date's units from current date's and use the diffence to calculate net purchases
+            diff_in_units = self._calc_target_units(units_t1=units_t1, units_t0=units_t0)
+
+            # Add current date's net purchases to the dataframe
+            df.loc[current_date,'NET_PURCHASES'] = self._calc_net_purchases(transaction_prices=trp,
+                                                                            assets_units=diff_in_units)
+
+            # Add current date's cash value to the dataframe
+            df.loc[current_date,'CASH'] = self._calc_cash_balance(previous_cash=starting_cash, 
+                                                                  cost=df.loc[current_date,'NET_PURCHASES'])
+            
+            # Add the (current date's) sum of the portfolio and cash value to the dataframe
+            df.loc[current_date,'VALUE'] = self._calc_total_value(valuation_prices=vp,
+                                                                  assets_units=units_t1,
+                                                                  current_cash=df.loc[current_date,'CASH'])
+                
+            # Keep previous date to use on the next iteration
+            previous_date = current_date
+
+        return df
+
+    # ---------------------------------------------------------------------------------------------------
+    def _calc_fees(self, df):
+    
+        df = df.copy()
+        
+        # Units per asset df
+        units_cols = [i for i in df.columns if 'UNT_' in i] 
+        units_df = df[units_cols].diff().copy()
+        units_df.columns = [i[4:] for i in units_df.columns]
+        
+        # Transaction prices df
+        tpr_cols = [i for i in df.columns if 'TRP_' in i]
+        tpr_df = df[tpr_cols].copy()
+        tpr_df.columns = [i[4:] for i in tpr_df.columns]
+        
+        # Fees calculation considering every transaction (purchase or sale of assets)
+        df['PCT_FEES'] = abs(units_df.mul(tpr_df)*(self._percentage_fee)).sum(axis=1)
+        
+        df['FLAT_FEES'] = ((units_df.mul(tpr_df).fillna(0)!=0)*self._flat_fee).sum(axis=1)
+        
+        df['TOTAL_FEES'] = df[['PCT_FEES','FLAT_FEES']].sum(axis=1)
+        
+        return df
+
+    # ---------------------------------------------------------------------------------------------------
+    def evaluate_strategy(self, prices_df, signals_df, verbose=True):
+        """
+        Strategy evaluation based on asset prices and signals.
+        """
+        # Copy so as not to change the original df
+        prices_df = prices_df.copy()
+        signals_df = signals_df.copy()
+        
+        # Asset names
+        assets_names = list(prices_df.columns)
+
         # Change signals df columns names (CNT: count of non-zero signals)
         signals_df.columns = ['SIG_'+i for i in signals_df.columns]
         signals_df['CNT'] = signals_df.sum(axis=1)
@@ -135,215 +240,117 @@ class BackTest:
         # Units, Net_Purchases, Cash, Value
         labels = units_names + ['NET_PURCHASES','CASH','VALUE']
 
-        # Concat prices and signals
+        # Concat (actual and transaction) prices and signals/weights
         df = _pd.concat([prices_df, signals_df, trp_df],axis=1)
         df[labels] = _np.NaN
-
-        # Lists of assets by category: weight, units, transaction price, value price
-        weight_cols = [i for i in df.columns if 'SIG_' in i]
-        units_cols = [i for i in df.columns if 'UNT_' in i]
-        trp_cols = [i for i in df.columns if 'TRP_' in i]
-        vlp_cols = list(prices_df.columns)
 
         # Find first date where signal is positive for at least one asset
         start_date = signals_df[signals_df['CNT']>0].index[0]
         df = df.loc[start_date:,:]
-
-
-        first_valid_date = True
-        for i in df.index:
-
-            trp = list(df.loc[i,trp_cols].replace(_np.NaN,0))
-            vp = list(df.loc[i,vlp_cols].replace(_np.NaN,0))
-            wei = list(df.loc[i,weight_cols])
-   
-            if first_valid_date:
-                
-                df.loc[i, units_cols] = self._calc_units_based_on_weights(transaction_prices=trp,
-                                                                        weights=wei,
-                                                                        capital=self._cash)
-                units_ls = list(df.loc[i,units_cols])
-                
-                df.loc[i,'NET_PURCHASES'] = self._calc_position_cost(transaction_prices=trp,
-                                                                     assets_units=units_ls)
-                
-                df.loc[i,'CASH'] = self._calc_cash_in_the_portfolio(previous_cash=self._cash,
-                                                                    cost=df.loc[i,'NET_PURCHASES'])
-                
-                df.loc[i,'VALUE'] = self._calc_total_value(valuation_prices=vp,
-                                                           assets_units=units_ls,
-                                                           current_cash=df.loc[i,'CASH'])
-                
-                first_valid_date = False
-
-            else:
-                if list(df.loc[previous_date,weight_cols]) == list(df.loc[i,weight_cols]):
-            
-                    df.loc[i,units_cols] = df.loc[previous_date,units_cols]
-                    
-                else:
-                    initial_units = self._calc_units_based_on_weights(transaction_prices=trp,
-                                                                    weights=wei,
-                                                                    capital=df.loc[previous_date,'VALUE'])
-                    
-                    df.loc[i,units_cols] = self._check_cash_balance(transaction_prices=trp,
-                                                                    cash=df.loc[previous_date,'CASH'],
-                                                                    units_suggested = initial_units,
-                                                                    units_old = df.loc[previous_date,units_cols])
         
+        # Add an origin date at the start of the df and set units, net purchases, cash and value
+        origin = _pd.DataFrame(index=[df.index[0]-timedelta(1)],columns = df.columns, data=_np.NaN)
+        origin[['VALUE','CASH']] = self._initial_capital
+        origin[['NET_PURCHASES']] = 0
+        origin[units_names] = 0
+
+        # Concat origin with the rest of the dates
+        df = _pd.concat([origin, df])
+
+        # Calculate strategy returns
+        df = self._calc_strat(df=df, asset_names=assets_names)
         
-                units_ls = list(df.loc[i,units_cols])
+        # Calculate fees
+        df = self._calc_fees(df)
         
-                diff_in_units = self._calc_target_units(units_t1=df.loc[i,units_cols],
-                                                        units_t0=df.loc[previous_date,units_cols])
-
-                df.loc[i,'NET_PURCHASES'] = self._calc_position_cost(transaction_prices=trp,
-                                                                    assets_units=diff_in_units)
-
-                df.loc[i,'CASH'] = self._calc_cash_in_the_portfolio(previous_cash=df.loc[previous_date,'CASH'],
-                                                                    cost=df.loc[i,'NET_PURCHASES'])
-
-
-                df.loc[i,'VALUE'] = self._calc_total_value(valuation_prices=vp,
-                                                        assets_units=units_ls,
-                                                        current_cash=df.loc[i,'CASH'])
-            previous_date = i
-
-        return df
+        if verbose:
+            return df.copy()
+        else: 
+            return df[assets_names + labels].copy()
     # ---------------------------------------------------------------------------------------------------
 
-# ---------------------------------------------------------------------------------------------------
-# class BackTest:
-    
-#     def __init__(self, initial_capital=10000):
-#         self._cash = initial_capital    
-    
-#     # ---------------------------------------------------------------------------------------------------
-#     def _get_units(self, transaction_price, capital):
-#         """
-#         Figure out how many units of the asset in question will be bought given a
-#         transaction price and investment capital.
-#         """
-#         # How many units of the asset will be bought
-#         units = round(capital/transaction_price)
 
-#         # Asset value must be less than total investment
-#         if units*transaction_price > capital:
-#             return units-1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    # ---------------------------------------------------------------------------------------------------
+    # def _calc_strat(self, df, vlp_cols):
+    #     """
         
-#         else:
-#             return units
-    
-    
-#     def _calc_position(self, value_p=None, trade_p=None, signal=None, action=None, cash=0, units=0):
-#         """
-#         Calculates what happens when the strategy enters a position, liquidates its holdings or
-#         stands pat.
-#         """
-
-#         # ------------------------------------------------------
-#         # ------ what happens when you enter a position -------
-#         # ------------------------------------------------------
-#         if (signal=='IN') and (action=='BUY'):
-
-#             # Units purchased
-#             units = self._get_units(trade_p, cash)
-
-#             # Position initial cost
-#             cost = round(units * trade_p,4)
-
-#             # Cash value
-#             cash = round(cash - cost,4)
+    #     """
+    #     # Lists of assets by category: weight, units, transaction price, value price
+    #     weight_cols = [i for i in df.columns if 'SIG_' in i]
+    #     units_cols = [i for i in df.columns if 'UNT_' in i]
+    #     trp_cols = [i for i in df.columns if 'TRP_' in i]
         
-#         # ------------------------------------------------------
-#         # ------ what happens when you get out of a position ---
-#         # ------------------------------------------------------
-#         elif (signal=='OUT') and (action=='SELL'):
 
-#             # Liquidate position to cash
-#             cash = cash + trade_p * units
+    #     first_valid_date = True
 
-#             # Purchase Cost is considered to be 0 as there are no purchases made
-#             cost = 0
+    #     for i in df.index:
+
+    #         trp = list(df.loc[i,trp_cols].replace(_np.NaN,0))
+    #         vp = list(df.loc[i,vlp_cols].replace(_np.NaN,0))
+    #         wei = list(df.loc[i,weight_cols])
+
+    #         # If date is the date the strategy begins i.e. enters at least one long position
+    #         if first_valid_date:
+                
+    #             #..calculate units based on starting capital (self._initial_capital)
+    #             df.loc[i, units_cols] = self._calc_units_based_on_weights(transaction_prices=trp,
+    #                                                                       weights=wei,
+    #                                                                       capital=self._initial_capital)
+    #             # Auxiliery arguments
+    #             units_t1 = df.loc[i,units_cols]
+    #             units_t0 = None
+    #             starting_cash = self._initial_capital
+    #             first_valid_date = False
+
+    #         # Otherwise you must use the previous date's value
+    #         else:
+    #             if list(df.loc[previous_date,weight_cols]) == list(df.loc[i,weight_cols]):
             
-#             # Also no assets are held so units = 0
-#             units = 0
-        
-#         # ------------------------------------------------------  
-#         # ------ what happens when you don't do anything -------
-#         # ------------------------------------------------------
-#         elif (action=='NO ACTION'):
-#             # No actions were taken, cash is unchanged, units are unchanged, cost = 0
-#             cash = cash
-#             units = units
-#             cost = 0
-        
-#         # Value of position
-#         valuation = round(units * value_p,4)
+    #                 df.loc[i,units_cols] = df.loc[previous_date,units_cols]
+                    
+    #             else:
+    #                 initial_units = self._calc_units_based_on_weights(transaction_prices=trp,
+    #                                                                 weights=wei,
+    #                                                                 capital=df.loc[previous_date,'VALUE'])
+                    
+    #                 df.loc[i,units_cols] = self._check_cash_balance(transaction_prices=trp,
+    #                                                                 cash=df.loc[previous_date,'CASH'],
+    #                                                                 units_suggested = initial_units,
+    #                                                                 units_old = df.loc[previous_date,units_cols])
+    #             # Auxiliery arguments
+    #             units_t1 = df.loc[i,units_cols]
+    #             units_t0 = df.loc[previous_date,units_cols]
+    #             starting_cash = df.loc[previous_date,'CASH']
+                
+    #         # Subtract previous date's units from current date's and use the diffence to calc net purchases
+    #         diff_in_units = self._calc_target_units(units_t1=units_t1, units_t0=units_t0)
+
+    #         # Add net purchases
+    #         df.loc[i,'NET_PURCHASES'] = self._calc_net_purchases(transaction_prices=trp, assets_units=diff_in_units)
+
+    #         # Add cash value
+    #         df.loc[i,'CASH'] = self._calc_cash_balance(previous_cash=starting_cash, cost=df.loc[i,'NET_PURCHASES'])
             
-#         # Value of position plus cash
-#         total = valuation + cash
+    #         # Add the sum of the portfolio and cash value
+    #         df.loc[i,'VALUE'] = self._calc_total_value(valuation_prices=vp, assets_units=units_t1,
+    #                                                    current_cash=df.loc[i,'CASH'])
+                
+    #         # Keep previous date to use in the next iteration
+    #         previous_date = i
 
-#         return units, cost, cash, valuation, total
-    
-    
-#     def evaluate_single_asset_strat(self, df, name='Asset', signal='Signal'):
-#         """
-#         Expects a dataframe with two columns: name & signal.
-        
-#         Signal: a list of 'IN'/'OUT' strings indicating whether the asset should be long or not
-#         Price: a list of asset prices (assumed to be end-of-day prices)
-        
-#         Derived columns:
-#         Trade price: the mean price of a 2-day period that a transaction is assumed to take place
-#         Action: the order the strategy issues, 'NO ACTION', 'SELL' or 'BUY' depending on whether the
-#         asset is already held and on whether it should be long or not.
-#         Units: units of the asset held/purchased at any given time
-#         Cost: units * trade price (the invested capital)
-#         Cash: cash in the portfolio
-#         Valuation: units * value price (even for the same day valuation is different than the cost)
-#         Total: sum of valuation and cash
-#         """
-        
-#         # Add Trade and Signal columns as per above
-
-#         df['Trade'] = df[name].rolling(2).mean()
-#         df['Action'] = df[signal].replace(['OUT','IN'],[0,1]).diff().replace([0,-1,1],['NO ACTION','SELL','BUY'])
-        
-#         # Add the following columns that are handy for performance calculation
-#         new_labels = ['Units', 'Cost', 'Cash', 'Valuation', 'Total']
-#         df[new_labels] = _np.NaN
-
-#         # Find the first time you enter the strategy as long ('BUY')
-#         first_valid_buy = df[df['Action']=='BUY'].first_valid_index()
-        
-#         # Start from this first date
-#         df = df.loc[first_valid_buy:,:]
-        
-#         # Iterate over the period
-#         for i in df.index:
-
-#             if i == first_valid_buy:
-#                 capital = self._cash
-#                 units_position = 0
-
-#             else:
-#                 capital = df.loc[previous_day,'Cash']
-#                 units_position = df.loc[previous_day,'Units']
-            
-#             # Fill the ['Units', 'Cost', 'Cash', 'Valuation', 'Total'] columns
-#             df.loc[i, new_labels] = self._calc_position(value_p=df.loc[i,name],
-#                                                         trade_p=df.loc[i,'Trade'],
-#                                                         signal=df.loc[i,signal],
-#                                                         action=df.loc[i,'Action'],
-#                                                         cash=capital,
-#                                                         units=units_position)
-            
-#             # Keep track of the previous valid date to use in the else statement above
-#             previous_day = i
-        
-#         # Calculate your benchmark - a buy and hold strategy!
-#         df['Buy_Hold'] = df[name].pct_change().add(1).cumprod().fillna(1)*df['Total'].iloc[0]
-        
-#         return df
-#     # ---------------------------------------------------------------------------------------------------
+    #     return df
