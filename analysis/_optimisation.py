@@ -5,7 +5,7 @@ import scipy.optimize as _sco
 
 class Optimise:
 
-    def __init__(self, frequency=252, annualised_risk_free_rate=0):
+    def __init__(self, frequency=252, annualised_risk_free_rate=0, ef_points=25):
         self.expected_ret = None
         self.covariance = None
         self._constraints = None
@@ -14,6 +14,8 @@ class Optimise:
         self.asset_names = None
         self._initial_weights = None
         self._freq = frequency
+        self.ef_points = ef_points
+        self._frontier_return = None
         self.annualised_risk_free_rate = annualised_risk_free_rate
         pass
     
@@ -67,9 +69,14 @@ class Optimise:
         return risk_parity
 
     # ---------------------------------------------------------------------------------------------------
-    def _set_constraints(self, type=None, fun=None):
+    def _set_constraints(self, con_type=None):
         ''' Set constraints '''
-        self._constraints = [{'type': 'eq', 'fun': lambda x: _np.sum(x) - 1}]
+        if con_type is None:
+            self._constraints = [{'type': 'eq', 'fun': lambda x: _np.sum(x) - 1}]
+
+        elif con_type=='frontier':
+            self._set_constraints()
+            self._constraints.append({'type': 'eq', 'fun': lambda x: self._portfolio_return(x, self.expected_ret) - self._frontier_return})
             
     # ---------------------------------------------------------------------------------------------------
     def _set_bounds(self):
@@ -83,18 +90,18 @@ class Optimise:
         ''' Cleans up optimisation results dictionary and converts key information to a dataframe'''
         # Create a dataframe
         clean_df = _pd.DataFrame(columns = results_dictionary.keys(),
-                           index = ['Message','Return', 'Volatility', 'Sharpe'] + self.asset_names,
+                           index = ['OptMessage','Return', 'Volatility', 'Sharpe'] + self.asset_names,
                            data=_np.NaN)
         
         for port_type in clean_df.columns:
             # Export optimisation message
             if 'Optimization terminated successfully' == results_dictionary[port_type]['message']:
-                clean_df.loc['Message',port_type] = 'Success'
+                clean_df.loc['OptMessage',port_type] = 'Success'
             else:
-                clean_df.loc['Message',port_type] = 'Failure - check log'
+                clean_df.loc['OptMessage',port_type] = 'Failure - check log'
 
             # Return and volatility
-            weights = list(results_dictionary[port_type]['x'].round(4))
+            weights = list(results_dictionary[port_type]['x'].round(5))
 
             clean_df.loc['Return',port_type] = self._portfolio_return(weights=weights,
                                                                       annualised_expected_returns=self.expected_ret)
@@ -108,8 +115,16 @@ class Optimise:
 
             # Asset weights
             clean_df.loc[self.asset_names,port_type] = weights
+
+        # Add Portfolio name column
+        clean_df = clean_df.T
+        clean_df['Portfolio'] = ['EFrontier' if 'EF_' in i else i for i in clean_df.index]
+
+        # Convert column types to float for non-string columns
+        float_cols = [i for i in clean_df.columns if i not in ['OptMessage','Portfolio']]
+        clean_df[float_cols] = clean_df[float_cols].astype(float)
             
-        return clean_df
+        return clean_df.T
     
     # ---------------------------------------------------------------------------------------------------
     def optimal_portfolios(self, df, expected_ret=None, covariance=None, method='SLSQP', verbose=False):
@@ -142,19 +157,19 @@ class Optimise:
 
         # Optimisation by portfolio type
         results_dict = {}
-        results_dict['maxReturn'] = _sco.minimize(self._max_return_portfolio, x0=self._initial_weights,
+        results_dict['MaxReturn'] = _sco.minimize(self._max_return_portfolio, x0=self._initial_weights,
                                                   args=(self.expected_ret), method=method,
                                                   bounds=self.bounds, constraints=self._constraints)
 
-        results_dict['minVariance'] = _sco.minimize(self._min_variance_portfolio, x0=self._initial_weights,
+        results_dict['MinVariance'] = _sco.minimize(self._min_variance_portfolio, x0=self._initial_weights,
                                                     args=(self.covariance), method=method,
                                                     bounds=self.bounds, constraints=self._constraints)
 
-        results_dict['maxSharpe'] = _sco.minimize(self._max_sharpe_portfolio, x0=self._initial_weights,
+        results_dict['MaxSharpe'] = _sco.minimize(self._max_sharpe_portfolio, x0=self._initial_weights,
                                                   args=(self.expected_ret, self.covariance), method=method,
                                                   bounds=self.bounds, constraints=self._constraints)
 
-        results_dict['riskParity'] = _sco.minimize(self._risk_parity_portfolio, x0=self._initial_weights,
+        results_dict['RiskParity'] = _sco.minimize(self._risk_parity_portfolio, x0=self._initial_weights,
                                                    args=(self.covariance), method=method,
                                                    bounds=self.bounds, constraints=self._constraints)
         
@@ -162,30 +177,34 @@ class Optimise:
             return results_dict
         else:
             return self.clean_up_results(results_dict)
+            
     # ---------------------------------------------------------------------------------------------------  
+    def efficient_frontier(self, df, expected_ret=None, covariance=None, method='SLSQP'):
+        '''
+        '''
+        optimal_portfolios_df = self.optimal_portfolios(df=df, expected_ret=expected_ret,
+                                                        covariance=covariance, method=method,
+                                                        verbose=False)
+        
+        # Returns of portfolios along the efficient frontier
+        minimum_return = optimal_portfolios_df.loc['Return','MinVariance']
+        maximum_return = optimal_portfolios_df.loc['Return','MaxReturn']
+        target_range = _np.linspace(start=minimum_return, stop=maximum_return - 0.0001, num=self.ef_points)
+
+        efrontier_dct = {}
+        self._set_constraints(con_type='frontier')
+
+        for ind, ret_level in enumerate(target_range):
+            self._frontier_return = ret_level
+            efrontier_dct['EF_'+str(ind+1)] = _sco.minimize(self._min_variance_portfolio, x0=self._initial_weights,
+                                                             args=(self.covariance), method=method,
+                                                             bounds=self.bounds, constraints=self._constraints)
+        
+        # "Reset" frontier return to None, otherwise the last ret_level value will be stored in self._frontier_return
+        self._frontier_return = None    
+
+        # Clean up eff frontier portfolios optimisation results and concat with the main 4 portfolios
+        optimal_portfolios_df = _pd.concat([optimal_portfolios_df, self.clean_up_results(efrontier_dct)],axis=1)
+
+        return optimal_portfolios_df
     
-    # D. Returns of portfolios along the efficient frontier -- need to be annualized
-    # start = _np.dot(minVariance['x'], meanRet)*freq
-    # end = _np.dot(maxReturn['x'], meanRet)*freq
-    # targetRet = _np.linspace(start, end, effPorts)
-
-    # # E. Efficient Frontier Computation
-    # mivVarConstraints = ({'type': 'eq', 'fun': lambda x: _np.nansum(x*meanRet)*freq - efRet},
-    #                      {'type': 'eq', 'fun': lambda x: _np.sum(x) - 1})
-
-    # EF = _pd.DataFrame(columns=['Return','Volatility'],index=range(len(targetRet)))
-    # OPT_WEI = _pd.DataFrame(columns=meanRet.index,index=range(len(targetRet)))
-
-    # portIndex = 0
-    # for efRet in targetRet:
-    #     efVol = _sco.minimize(portStats, initialWeights, args=(meanRet, covRet, freq, 'MinVar'),
-    #                        method='SLSQP', bounds=weightBounds, constraints=mivVarConstraints)
-    #     EF.loc[portIndex,['Return','Volatility']] = float(efRet), float(efVol['fun'])
-    #     OPT_WEI.loc[portIndex,:] = efVol['x']
-    #     portIndex += 1
-
-    # availableAssets = len(meanRet)
-
-    # OPT_WEI_MEAN = _pd.DataFrame(OPT_WEI.copy().mean()).round(5)
-
-    # return EF, availableAssets, OPT_WEI_MEAN
