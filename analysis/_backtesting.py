@@ -100,6 +100,9 @@ class BackTest:
             # Upper bound
             constraints.append(units_new[i]<=units_suggested[i])
 
+            # Price constraint -> no asset has a price larger than the remaining cash amount
+            # constraints.append(transaction_prices[i])
+
         # Expression to minimize: [ cash - (net purchases) ], if net purchases are negative then the sum is sure > 0
         exp = cash -cp.sum([transaction_prices[ind] * (units_new[ind] - units_prev[ind]) for ind in units_new.keys()])
 
