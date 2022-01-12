@@ -30,6 +30,11 @@ class Optimise:
         return _np.nansum(weights * _np.nansum(annualised_covariance * weights, axis=1))
 
     # ---------------------------------------------------------------------------------------------------
+    def shrunk_covariance(self):
+        ''
+        pass
+    
+    # ---------------------------------------------------------------------------------------------------
     def _max_return_portfolio(self, weights, annualised_expected_returns):
         ''' Find highest return portfolio returns '''
         return -self._portfolio_return(weights=weights, annualised_expected_returns=annualised_expected_returns)
@@ -75,7 +80,7 @@ class Optimise:
             self._constraints = [{'type': 'eq', 'fun': lambda x: _np.sum(x) - 1}]
 
         elif con_type=='frontier':
-            self._set_constraints()
+            self._set_constraints() # clear existing constraints first, then add the default constraint Σw=1 before any other
             self._constraints.append({'type': 'eq', 'fun': lambda x: self._portfolio_return(x, self.expected_ret) - self._frontier_return})
             
     # ---------------------------------------------------------------------------------------------------
@@ -90,16 +95,14 @@ class Optimise:
         ''' Cleans up optimisation results dictionary and converts key information to a dataframe'''
         # Create a dataframe
         clean_df = _pd.DataFrame(columns = results_dictionary.keys(),
-                           index = ['OptMessage','Return', 'Volatility', 'Sharpe'] + self.asset_names,
+                           index = ['Return', 'Volatility', 'Sharpe'] + self.asset_names,
                            data=_np.NaN)
         
         for port_type in clean_df.columns:
-            # Export optimisation message
-            if 'Optimization terminated successfully' == results_dictionary[port_type]['message']:
-                clean_df.loc['OptMessage',port_type] = 'Success'
-            else:
-                clean_df.loc['OptMessage',port_type] = 'Failure - check log'
-
+            # Print out optimisation message
+            if 'Optimization terminated successfully' != results_dictionary[port_type]['message']:
+                print('Something went wrong while performing portfolio optimisation for',port_type)
+            
             # Return and volatility
             weights = list(results_dictionary[port_type]['x'].round(5))
 
@@ -115,16 +118,8 @@ class Optimise:
 
             # Asset weights
             clean_df.loc[self.asset_names,port_type] = weights
-
-        # Add Portfolio name column
-        clean_df = clean_df.T
-        clean_df['Portfolio'] = ['EFrontier' if 'EF_' in i else i for i in clean_df.index]
-
-        # Convert column types to float for non-string columns
-        float_cols = [i for i in clean_df.columns if i not in ['OptMessage','Portfolio']]
-        clean_df[float_cols] = clean_df[float_cols].astype(float)
             
-        return clean_df.T
+        return clean_df
     
     # ---------------------------------------------------------------------------------------------------
     def optimal_portfolios(self, df, expected_ret=None, covariance=None, method='SLSQP', verbose=False):
@@ -178,7 +173,7 @@ class Optimise:
         else:
             return self.clean_up_results(results_dict)
             
-    # ---------------------------------------------------------------------------------------------------  
+    # ---------------------------------------------------------------------------------------------------
     def efficient_frontier(self, df, expected_ret=None, covariance=None, method='SLSQP'):
         '''
         '''
@@ -208,3 +203,4 @@ class Optimise:
 
         return optimal_portfolios_df
     
+    # ---------------------------------------------------------------------------------------------------

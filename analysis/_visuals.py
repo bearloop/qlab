@@ -13,10 +13,10 @@ _cool_colors = ["#001219","#005f73","#0a9396","#94d2bd",
 
 _cmx_colors = ["#961957","#d0d5db","#2c71c0"]#["#e39774","#e5e5e5","#5c9ead"]
 
-_chart_format_dict = {'Percent':   ["Date: %{x|%Y-%m-%d}<br>Value: %{y:.1%}",  ".0%"       ],
-                      'Value':     ["Date: %{x|%Y-%m-%d}<br>Value: %{y}",      ".1f"       ],
-                      'Value_2f':  ["Date: %{x|%Y-%m-%d}<br>Value: %{y:.2f}",  ".2f"       ],
-                      'Density':   ["Return: %{x:.2%}<br>Count: %{y}",         ".0f", ".1%"]}
+_chart_format_dict = {'Percent':   ["Date: %{x|%Y-%m-%d}<br>Value: %{y:.1%}",  ".0%", ".1%"],
+                      'Value':     ["Date: %{x|%Y-%m-%d}<br>Value: %{y}",      ".1f"        ],
+                      'Value_2f':  ["Date: %{x|%Y-%m-%d}<br>Value: %{y:.2f}",  ".2f"        ],
+                      'Density':   ["Return: %{x:.2%}<br>Count: %{y}",         ".0f",  ".1%"]}
 
 _charts_template='simple_white'
 
@@ -278,7 +278,9 @@ def plot_correl(df=None, base=None, window=21, chart_title='Correlation', legend
 
 # --------------------------------------------------------------------------------------------
 def plot_hist(df=None, normal=False, normal_label=None, chart_title='Returns KDE', legend=True, to_return=False, width=720, height=360):
+    """
     
+    """
     if df is None: 
         return _plot_none(chart_title=chart_title, width=width, height=height)
     
@@ -314,20 +316,89 @@ def plot_hist(df=None, normal=False, normal_label=None, chart_title='Returns KDE
             return fig 
 
 # --------------------------------------------------------------------------------------------
-def _plot_scatter(df=None, chart_title='Returns-Volatility Plot', legend=True, to_return=False, width=720, height=360):
+def plot_scatter(df=None, chart_title='Returns-Volatility Plot', legend=True, to_return=False, width=720, height=360):
+    """
+    Plots expected return/vol of optimised portfolios and the effiient frontier.
+    Expects a pd.DataFrame as provided by Optimise().efficient_frontier().
+    """
     if df is None: 
         return _plot_none(chart_title=chart_title, width=width, height=height)
     
     else:
-        df = _ffill(df)
-        fig = ''
+        df = df.T.copy()
+    
+        bubble_size = [0.2 if 'EF' in i else 0.6 for i in df.index]
+        bubble_colors = [i if 'EF' not in i else 'EF' for i in df.index]
+
+        axis_format = _chart_format_dict['Percent'][1]
+        
+        # Scatter plot
+        fig = _px.scatter(df,x='Volatility',y='Return',size=bubble_size,
+                     template='simple_white',color=bubble_colors,
+                     color_discrete_sequence=_cool_colors,custom_data=['Sharpe'])
+        
+        # Add line plot
+        df = df.drop(['MaxReturn','MinVariance','MaxSharpe','RiskParity'],axis=0)
+    
+        ef_line = _px.line(df,x='Volatility',y='Return',color_discrete_sequence=['grey']).select_traces()
+
+        fig.add_traces(list(ef_line))
+
+        # Format title, dimensions, legend
+        fig = _text_layout(fig=fig, title=chart_title, legend=legend, width=width, height=height)
+
+        # Format axis format, labels and hover templates
+        fig = fig.update_xaxes(tickformat=axis_format,title_text='Volatility (Ann.)'
+                ).update_yaxes(tickformat=axis_format,title_text='Expected Return (Ann.)'
+                ).update_traces(hovertemplate="ERet: %{y:.2%}<br>Vol: %{x:.2%}<br>Sharpe: %{customdata[0]:.3f}")
 
         # Show or return the plot
         if to_return==False:
             fig.show()
         
         else:
-            return fig 
+            return fig
+
+# --------------------------------------------------------------------------------------------
+def plot_alloc_barchart(df=None, chart_title='Optimised Portfolios Allocation', legend=True, to_return=False, width=720, height=360):
+    """
+    Plots allocation of optimised portfolios.
+    Expects a pd.DataFrame as provided by Optimise().efficient_frontier() or Optimise().optimal_portfolios().
+    """
+    if df is None: 
+        return _plot_none(chart_title=chart_title, width=width, height=height)
+    
+    else:
+        df = df[['MaxReturn','MinVariance','MaxSharpe','RiskParity']
+                ].drop(['Return','Volatility','Sharpe']).sort_values(by='RiskParity',ascending=False)
+
+        axis_format = _chart_format_dict['Percent'][1]
+        
+        # Plot bar chart with shared x-axis
+        fig = _px.bar(df, facet_col='variable', facet_col_wrap=1,template='simple_white',color_discrete_sequence=_cool_colors)
+
+        # Drop "variable" annotation and allow for different y-axis range
+        fig = fig.update_yaxes(matches=None).for_each_annotation(lambda a: a.update(text='Allocation: '+a.text.split("=")[-1]))
+        
+        # Format title, dimensions, legend (can't use _text_layout due to categoryorder preset)
+        fig = fig.update_layout(font = dict(color="#505050", size=10, family='sans-serif'),
+                            width = width, height = height,
+                            showlegend = legend, legend_title = None,
+                            margin = {'l':0, 't':25, 'r':10, 'b':0, 'pad':0},
+                            title = {'text':chart_title, 'xref':'paper', 'x':1, 'xanchor': 'right',
+                                     'font':{'size':15, 'family':'sans-serif'}})
+
+        # Hovertemplate and tickformats
+        fig = fig.update_traces(hovertemplate="Asset: %{x}<br>Weight: %{y:.2%}"
+               ).update_xaxes(tickformat=axis_format,title_text='').update_yaxes(tickformat=axis_format,title_text='')
+
+        # Show or return the plot
+        if to_return==False:
+            fig.show()
+        
+        else:
+            return fig
+
 
 # --------------------------------------------------------------------------------------------
 def plot_cmx(df=None, chart_title='Correlation matrix', colorbar=False, to_return=False, width=720, height=360, show_dates=True):
