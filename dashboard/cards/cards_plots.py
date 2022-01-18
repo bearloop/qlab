@@ -1,6 +1,7 @@
 from ...analysis import _visuals as vs
+from ...analysis import Optimise
 from .cards_templates import card_template, card_template_cmx, card_template_treemap, update_background, get_period
-
+import pandas as pd
 
 # --------------------------------------------------------------------------------------------------------------
 def card_portfolio_alloc_hist(data):
@@ -191,3 +192,18 @@ def card_barchart(data, sort_by, card_title='Assets Monitor'):
     return card
 
 # --------------------------------------------------------------------------------------------------------------
+def card_optimised_portfolios(data, card_title='Optimised Portfolios Allocation'):
+    data = pd.DataFrame(data).copy()
+    if len(data.columns) > 1:
+        opt = Optimise()
+        ef = opt.efficient_frontier(data)
+    else:
+        ef = None
+
+    figure = vs.plot_alloc_barchart(ef, chart_title='', legend=True, to_return=True)
+    figure = update_background(figure)
+
+    card = card_template(figure=figure,
+                         card_title=card_title)
+    
+    return card

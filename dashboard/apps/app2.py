@@ -22,11 +22,9 @@ card_assets_performance = cp.card_performance(pdt['SWDA'],
 card_assets_risk = cp.card_risk(pdt['SWDA'], card_title='Assets Risk Annualised',
                                 window=63, dropna=True, legend=True)
 
-# card_assets_beta = cp.card_beta(pdt['SWDA'], card_title='Assets Risk Annualised',
-#                                 window=63, dropna=True, legend=True)
-
 card_assets_kde = cp.card_histogram(pdt['SWDA'], normal=False, normal_label=None, card_title='Asset Returns KDE', legend=True)
 
+card_assets_optimised = cp.card_optimised_portfolios(pdt['SWDA'])
 
 card_assets_ddown = cp.card_drawdown(pdt['SWDA'], dropna=True, legend=True)
 
@@ -50,8 +48,9 @@ def create_layout_2():
                 # Drawdown
                 dbc.Row([dbc.Col([card_assets_ddown],width=12, id='assets_ddown')],class_name='p-4'),
 
-                # Histogram
-                dbc.Row([dbc.Col([card_assets_kde],width=6, id='assets_hist')],class_name='p-4'),
+                # Histogram and Optimised Portfolio
+                dbc.Row([dbc.Col([card_assets_kde],width=6, id='assets_hist'),
+                         dbc.Col([card_assets_optimised],width=6, id='assets_optimal')],class_name='p-4'),
 
                 # Asset stats table
                 dbc.Row([dbc.Col([card_assets_info],width=12, id='assets_info')],class_name='p-4'),
@@ -208,6 +207,24 @@ def update_values(value, eop, sop):
         return out
 
 # -------------------
+# Update optimised portfolios chart
+@app.callback(
+    [Output('assets_optimal','children')],
+    [Input("dropdown_securities_list", "value"),
+     Input("date-picker-range", "end_date"),
+     Input("date-picker-range", "start_date")]
+)
+def update_values(value, eop, sop):
+    try:
+        df = custom_dates(start=sop,end=eop,asset_list=value)
+        out = [cp.card_optimised_portfolios(df)]
+        return out
+    except Exception as e:
+        print('Failed attempt to update list (histogram plot)', e.args)
+        out = [cp.card_optimised_portfolios(df)]
+        return out
+
+# -------------------
 # Update drawdown chart
 @app.callback(
     [Output('assets_ddown','children')],
@@ -280,7 +297,6 @@ def set_date_range_for_securities(value):
         end_date = datetime.today()
         
         return end_date, end_date, start_date, start_date
-
 
 
 # ---------------------------------------------------------------------------------

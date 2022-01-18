@@ -30,7 +30,7 @@ class Optimise:
         return _np.nansum(weights * _np.nansum(annualised_covariance * weights, axis=1))
 
     # ---------------------------------------------------------------------------------------------------
-    def shrunk_covariance(self):
+    def shrunk_covariance(self, df):
         ''
         pass
     
