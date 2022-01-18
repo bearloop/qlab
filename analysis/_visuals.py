@@ -370,7 +370,7 @@ def plot_alloc_barchart(df=None, chart_title='Optimised Portfolios Allocation', 
     
     else:
         df = df[['MaxReturn','MinVariance','MaxSharpe','RiskParity']
-                ].drop(['Return','Volatility','Sharpe']).sort_values(by='RiskParity',ascending=False)
+                    ].drop(['Return','Volatility','Sharpe']).sort_values(by='RiskParity',ascending=False)
 
         axis_format = _chart_format_dict['Percent'][1]
         

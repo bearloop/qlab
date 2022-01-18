@@ -193,10 +193,12 @@ def card_barchart(data, sort_by, card_title='Assets Monitor'):
 
 # --------------------------------------------------------------------------------------------------------------
 def card_optimised_portfolios(data, card_title='Optimised Portfolios Allocation'):
+
     data = pd.DataFrame(data).copy()
-    if len(data.columns) > 1:
+
+    if len(data.columns) >= 1:
         opt = Optimise()
-        ef = opt.efficient_frontier(data)
+        ef = opt.optimal_portfolios(data)
     else:
         ef = None
 

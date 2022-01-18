@@ -122,6 +122,27 @@ class Optimise:
         return clean_df
     
     # ---------------------------------------------------------------------------------------------------
+    def _single_asset_portfolio(self, df):
+        
+        # Construct data frame
+        output = _pd.DataFrame(columns=['MaxReturn','MinVariance','MaxSharpe','RiskParity'])
+        
+        # Set return to the asset's annualised return
+        output.loc['Return',:] = df.pct_change().mean()[0]*self._freq
+
+        # Set volatility to the asset's annualised standard deviation of returns
+        output.loc['Volatility',:] = df.pct_change().std()[0]*(self._freq**(1/2))
+
+        # Set Sharpe ratio
+        output.loc['Sharpe',:] = (output.loc['Return','MaxReturn'] - self.annualised_risk_free_rate) / output.loc['Volatility','MaxReturn']
+        
+        #  Set weight to 1
+        single_asset_name = df.columns[0]
+        output.loc[single_asset_name,:] = 1
+
+        return output
+        
+    # ---------------------------------------------------------------------------------------------------
     def optimal_portfolios(self, df, expected_ret=None, covariance=None, method='SLSQP', verbose=False):
         '''
         Returns results for 4 optimised by some criterion portfolios:
@@ -132,46 +153,52 @@ class Optimise:
         expected_ret: None or pd.Series, asset names as its index and annualised returns as its values
         covariance: None or pd.DataFrame, asset returns covariance
         '''
-        # Set assets expected returns & covariance
-        if expected_ret is None:
-           self.expected_ret =  df.pct_change().dropna(how='all').mean()*self._freq
+        df = _pd.DataFrame(df).copy()
+
+        if len(df.columns) <= 1:
+            return self._single_asset_portfolio(df)
+
         else:
-            self.expected_ret = expected_ret
+            # Set assets expected returns & covariance
+            if expected_ret is None:
+                self.expected_ret =  df.pct_change().dropna(how='all').mean()*self._freq
+            else:
+                self.expected_ret = expected_ret
 
-        if covariance is None:
-            self.covariance = df.pct_change().dropna(how='all').cov()*self._freq
-        else:
-            self.covariance = covariance
-        
-        # Asset names
-        self.asset_names = list(self.expected_ret.index)
+            if covariance is None:
+                self.covariance = df.pct_change().dropna(how='all').cov()*self._freq
+            else:
+                self.covariance = covariance
+            
+            # Asset names
+            self.asset_names = list(self.expected_ret.index)
 
-        # Set bounds and constraints
-        self._set_bounds()
-        self._set_constraints()
+            # Set bounds and constraints
+            self._set_bounds()
+            self._set_constraints()
 
-        # Optimisation by portfolio type
-        results_dict = {}
-        results_dict['MaxReturn'] = _sco.minimize(self._max_return_portfolio, x0=self._initial_weights,
-                                                  args=(self.expected_ret), method=method,
-                                                  bounds=self.bounds, constraints=self._constraints)
-
-        results_dict['MinVariance'] = _sco.minimize(self._min_variance_portfolio, x0=self._initial_weights,
-                                                    args=(self.covariance), method=method,
+            # Optimisation by portfolio type
+            results_dict = {}
+            results_dict['MaxReturn'] = _sco.minimize(self._max_return_portfolio, x0=self._initial_weights,
+                                                    args=(self.expected_ret), method=method,
                                                     bounds=self.bounds, constraints=self._constraints)
 
-        results_dict['MaxSharpe'] = _sco.minimize(self._max_sharpe_portfolio, x0=self._initial_weights,
-                                                  args=(self.expected_ret, self.covariance), method=method,
-                                                  bounds=self.bounds, constraints=self._constraints)
+            results_dict['MinVariance'] = _sco.minimize(self._min_variance_portfolio, x0=self._initial_weights,
+                                                        args=(self.covariance), method=method,
+                                                        bounds=self.bounds, constraints=self._constraints)
 
-        results_dict['RiskParity'] = _sco.minimize(self._risk_parity_portfolio, x0=self._initial_weights,
-                                                   args=(self.covariance), method=method,
-                                                   bounds=self.bounds, constraints=self._constraints)
+            results_dict['MaxSharpe'] = _sco.minimize(self._max_sharpe_portfolio, x0=self._initial_weights,
+                                                    args=(self.expected_ret, self.covariance), method=method,
+                                                    bounds=self.bounds, constraints=self._constraints)
+
+            results_dict['RiskParity'] = _sco.minimize(self._risk_parity_portfolio, x0=self._initial_weights,
+                                                    args=(self.covariance), method=method,
+                                                    bounds=self.bounds, constraints=self._constraints)
         
-        if verbose:
-            return results_dict
-        else:
-            return self.clean_up_results(results_dict)
+            if verbose:
+                return results_dict
+            else:
+                return self.clean_up_results(results_dict)
             
     # ---------------------------------------------------------------------------------------------------
     def efficient_frontier(self, df, expected_ret=None, covariance=None, method='SLSQP'):
