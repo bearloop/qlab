@@ -1,6 +1,119 @@
 import numpy as _np
 import pandas as _pd
+import requests as _requests
+import json as _json
 from ._portfolio import Portfolio
+
+# --------------------------------------------------------------------------------------------
+def _ishares_constituents(ishares_id, weight):  
+    '''
+    Return information on Blackrock's iShares ETFs (see constants file for mapping info)
+    '''
+    try:
+        suffix = '/fund/1506575576011.ajax?tab=all&fileType=json'
+        url = 'https://www.ishares.com/uk/individual/en/products/'+ishares_id+suffix
+        
+        res = _requests.get(url)
+        clean_data = _json.loads(res.content)['aaData']
+
+        dct = {}
+
+        for ind, l in enumerate(clean_data):
+            
+            dct[ind+1] = {'symbol':l[0],'security':l[1],
+                          'sector':l[2],'asset_class':l[3],
+                          'raw_weight':l[5]['raw'],'isin':l[8],
+                          'country':l[10],'fx':l[12]}
+                
+        df = _pd.DataFrame(dct).T
+        df['weight'] = df['raw_weight']*weight
+        
+        return df
+    
+    except Exception as e:
+        print(e.args)
+
+# --------------------------------------------------------------------------------------------
+def _sum_top_constituents(df):
+    '''
+    Sum top-20 records and subtract from 100.
+    '''
+    if df.shape[0]>20:
+        length = 20
+    else:
+        length = df.shape[0]
+    df.loc[length+1,:] = ['Total Above',df.loc[:length,'weight'].sum()]
+    df.loc[length+2,:] = ['Total Other',100-df.loc[length+1,'weight']]
+    
+    return df.head(22)
+
+# --------------------------------------------------------------------------------------------
+def _top_constituents(df):
+    '''
+    Construct table with top constituents for each aggregation type.
+    '''
+    df_out = _pd.DataFrame()
+    for col in ['security','country','sector','asset_class','fx']:
+
+        sup = df.groupby(col).sum().sort_values(by='weight',ascending=False)
+
+        # Add column with index values
+        sup[col] = sup.index
+
+        # Reindex
+        sup.index = [i for i in range(1,len(sup)+1)]
+
+        # Rearange columns
+        sup = sup[[col,'weight']]
+
+        # Add top and bottom
+        sup=_sum_top_constituents(sup)
+
+        # Format table
+        sup[['weight']] = sup[['weight']].applymap('{:,.1f}%'.format)
+
+        # Concat new columns
+        df_out = _pd.concat([df_out,sup],axis=1).fillna('')
+
+    return df_out
+
+# --------------------------------------------------------------------------------------------
+def table_portfolio_concentration(assets_list=None, weights=None, db=None, verbose=False):
+    '''
+    assets: list of iShares ETF symbols
+    weights: list of weights (weight of each ETF)
+    '''
+    # group_by: isin, security, sector, country or asset_class
+    group_by = 'security'
+    
+    # Query ishares table and convert DF to a dictionary of ETF symbols and their respective iShares ids
+    db.execute_sql('SELECT * FROM ishares')
+    ishares = db.fetch().set_index('symbol').to_dict()['ishares_id']
+    
+    # Weights list if none is passed
+    if weights is None:
+        weights = [1/len(assets_list) for i in assets_list]
+    
+    # Dataframe to return
+    df = _pd.DataFrame()
+    
+    # Retrieve json
+    for ind, etf in enumerate(assets_list):
+        df = _pd.concat([df,_ishares_constituents(ishares[etf], weights[ind])])
+    
+    # Group by security and keep weights first
+    w = df.groupby(group_by).sum().sort_values(by='weight', ascending=False)[['weight']]
+
+    # Group by security and add other key columns
+    cols = df.groupby(group_by).last()[['country','sector','asset_class','symbol','isin','fx']]
+    
+    # Concat concentrated weights and key columns by 
+    df = _pd.concat([w,cols],axis=1)
+    
+    if verbose==False:
+        df = _top_constituents(df=df)
+
+    return df
 
 # --------------------------------------------------------------------------------------------
 def table_fund_details(assets_list=None, db=None):

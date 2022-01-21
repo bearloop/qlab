@@ -6,6 +6,12 @@ sql_market_segments_table_create = """
                               segment varchar NOT NULL)
                            """
 
+sql_ishares_table_create = """
+                          CREATE TABLE IF NOT EXISTS ishares (
+                              symbol varchar NOT NULL PRIMARY KEY,
+                              ishares_id varchar NOT NULL)
+                           """
+
 sql_prices_table_create = """
                           CREATE TABLE IF NOT EXISTS prices (
                               symbol text NOT NULL PRIMARY KEY,
@@ -84,6 +90,8 @@ sql_etfs_data_table_create = """
 # DROP TABLES
 sql_market_segments_table_drop = """DROP TABLE IF EXISTS market_segments"""
 
+sql_ishares_table_drop = """DROP TABLE IF EXISTS ishares"""
+
 sql_prices_table_drop = """DROP TABLE IF EXISTS prices"""
 
 sql_transactions_table_drop = """DROP TABLE IF EXISTS transactions"""
@@ -108,6 +116,15 @@ sql_market_segments_insert_query = """
                                         ON CONFLICT (symbol)
                                              DO UPDATE SET segment = EXCLUDED.segment
                                    """
+
+sql_ishares_insert_query = """
+                           INSERT INTO ishares (
+                              symbol,
+                              ishares_id)
+                              VALUES (%s, %s)
+                              ON CONFLICT (symbol)
+                                   DO UPDATE SET ishares_id = EXCLUDED.ishares_id
+                           """
 
 sql_prices_insert_query = """
                         INSERT INTO prices (
@@ -231,6 +248,10 @@ sql_etfs_data_insert_query = """
 sql_market_segments_delete_query = """
                                    DELETE FROM market_segments WHERE symbol = %s
                                    """
+
+sql_ishares_delete_query = """
+                           DELETE FROM ishares WHERE symbol = %s
+                           """
 
 sql_prices_delete_query = """
                            DELETE FROM prices WHERE symbol = %s
