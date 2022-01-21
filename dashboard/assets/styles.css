@@ -305,7 +305,8 @@ body {
 
 /*------------------------------------------------------------------------------*/
 /*Custom table css*/
-#custom-table-transactions, #custom-table-fund-details, #custom-table-stats, #custom-table-assets-view{
+#custom-table-transactions, #custom-table-fund-details, #custom-table-stats, 
+#custom-table-assets-view, #custom-table-portfolio-constituents{
   background-color: transparent;
   margin: 2% ;
   padding: 2%;
@@ -313,6 +314,9 @@ body {
   overflow: auto;
 }
 
+#custom-table-portfolio-constituents{
+  max-height: 28rem;
+}
 
 .tab.jsx-2137964197, .tab--selected.jsx-2137964197, 
 .tab.jsx-2137964197:last-of-type,

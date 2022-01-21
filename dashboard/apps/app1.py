@@ -7,6 +7,9 @@ from ..cards import cards_tables as ct
 from dash.dependencies import Input, Output
 from ..app import app
 
+wei_assets_names = list(data_wei_last.index)
+wei_assets_values = [float(i) for i in data_wei_last.values]
+
 card_port_performance = cp.card_performance(data_port)
 card_port_returns = cp.card_port_returns(data_port,period='day')
 card_port_kde = cp.card_histogram(data_port)
@@ -20,6 +23,7 @@ card_port_ddown = cp.card_drawdown(data_cmx,legend=True)
 card_correl_matrix = cp.card_cmx(data_cmx)
 card_correl_rolling = cp.card_correl(data_cmx, window=42, base='PORT', legend=True)
 card_port_holdings = ct.card_table_portfolio_holdings_summary(db)
+card_port_constituents = ct.card_table_portfolio_constituents(assets_list=wei_assets_names, weights=wei_assets_values, db=db)
 
 def create_layout_home():
 
@@ -49,7 +53,10 @@ def create_layout_home():
                 
                 # Drawdown
                 dbc.Row([dbc.Col([card_port_ddown], width=6, id='port_ddown'),
-                         dbc.Col([card_port_beta], width=6, id='port_beta')], class_name='p-4')
+                         dbc.Col([card_port_beta], width=6, id='port_beta')], class_name='p-4'),
+
+                # Asset stats table
+                dbc.Row([dbc.Col([card_port_constituents],width=12, id='port_constituents')],class_name='p-4'),
 
             ],className='my-page-container')
 

@@ -20,13 +20,13 @@ def _ishares_constituents(ishares_id, weight):
 
         for ind, l in enumerate(clean_data):
             
-            dct[ind+1] = {'symbol':l[0],'security':l[1],
-                          'sector':l[2],'asset_class':l[3],
-                          'raw_weight':l[5]['raw'],'isin':l[8],
-                          'country':l[10],'fx':l[12]}
+            dct[ind+1] = {'Symbol':l[0],'Security':l[1],
+                          'Sector':l[2],'Asset Class':l[3],
+                          'RawWei':l[5]['raw'],'ISIN':l[8],
+                          'Country':l[10],'FX':l[12]}
                 
         df = _pd.DataFrame(dct).T
-        df['weight'] = df['raw_weight']*weight
+        df['Weight'] = df['RawWei']*weight
         
         return df
     
@@ -42,8 +42,8 @@ def _sum_top_constituents(df):
         length = 20
     else:
         length = df.shape[0]
-    df.loc[length+1,:] = ['Total Above',df.loc[:length,'weight'].sum()]
-    df.loc[length+2,:] = ['Total Other',100-df.loc[length+1,'weight']]
+    df.loc[length+1,:] = ['Total Above',df.loc[:length,'Weight'].sum()]
+    df.loc[length+2,:] = ['Total Other',100-df.loc[length+1,'Weight']]
     
     return df.head(22)
 
@@ -53,9 +53,9 @@ def _top_constituents(df):
     Construct table with top constituents for each aggregation type.
     '''
     df_out = _pd.DataFrame()
-    for col in ['security','country','sector','asset_class','fx']:
+    for col in ['Security','Country','Sector','Asset Class','FX']:
 
-        sup = df.groupby(col).sum().sort_values(by='weight',ascending=False)
+        sup = df.groupby(col).sum().sort_values(by='Weight',ascending=False)
 
         # Add column with index values
         sup[col] = sup.index
@@ -64,13 +64,14 @@ def _top_constituents(df):
         sup.index = [i for i in range(1,len(sup)+1)]
 
         # Rearange columns
-        sup = sup[[col,'weight']]
+        sup = sup[[col,'Weight']]
 
         # Add top and bottom
         sup=_sum_top_constituents(sup)
 
-        # Format table
-        sup[['weight']] = sup[['weight']].applymap('{:,.1f}%'.format)
+        # Format table and change column names
+        sup[['Weight']] = sup[['Weight']].applymap('{:,.1f}%'.format)
+        sup.columns = [sup.columns[0], sup.columns[0]+' W']
 
         # Concat new columns
         df_out = _pd.concat([df_out,sup],axis=1).fillna('')
@@ -84,7 +85,7 @@ def table_portfolio_concentration(assets_list=None, weights=None, db=None, verbo
     weights: list of weights (weight of each ETF)
     '''
     # group_by: isin, security, sector, country or asset_class
-    group_by = 'security'
+    group_by = 'Security'
     
     # Query ishares table and convert DF to a dictionary of ETF symbols and their respective iShares ids
     db.execute_sql('SELECT * FROM ishares')
@@ -102,10 +103,10 @@ def table_portfolio_concentration(assets_list=None, weights=None, db=None, verbo
         df = _pd.concat([df,_ishares_constituents(ishares[etf], weights[ind])])
     
     # Group by security and keep weights first
-    w = df.groupby(group_by).sum().sort_values(by='weight', ascending=False)[['weight']]
+    w = df.groupby(group_by).sum().sort_values(by='Weight', ascending=False)[['Weight']]
 
     # Group by security and add other key columns
-    cols = df.groupby(group_by).last()[['country','sector','asset_class','symbol','isin','fx']]
+    cols = df.groupby(group_by).last()[['Country','Sector','Asset Class','Symbol','ISIN','FX']]
     
     # Concat concentrated weights and key columns by 
     df = _pd.concat([w,cols],axis=1)

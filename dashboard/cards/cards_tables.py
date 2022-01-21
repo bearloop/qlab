@@ -24,11 +24,7 @@ format_cell = {
         'border-bottom': '0.1px solid #272727'
     }
 
-format_data_conditional = [{
-            "if": {"state": "selected"},
-           
-        }]
-
+format_data_conditional = [{ "if": {"state": "selected"} }]
 
 # --------------------------------------------------------------------------------------------------------------
 # Portfolio view: transactions table
@@ -101,6 +97,27 @@ def card_table_portfolio_holdings_summary(db):
     return card
 
 
+# --------------------------------------------------------------------------------------------------------------
+# Portfolio view: portfolio constituents
+def card_table_portfolio_constituents(assets_list, weights, db):
+
+    table = tab.table_portfolio_concentration(assets_list=assets_list,weights=weights,db=db)
+    table = _pd.concat([_pd.DataFrame(table.index.values, index=table.index, columns=['Num']),table],axis=1)
+        
+    cols = [{'id':i,'name':i} for i in table.columns]
+
+    table = table.to_dict('records')
+    table_assets = dash_table.DataTable(data=table, columns=cols, id='custom-table-portfolio-constituents',
+                                style_data_conditional=format_data_conditional,
+                                style_table={},
+                                style_header=format_header,
+                                style_cell=format_cell)
+    
+    card = card_table_single(table=table_assets,
+                             card_title='Portfolio Constituents',
+                             card_sub_title='Portfolio holdings concentration by security, country, sector, asset class and currency')
+
+    return card
 # --------------------------------------------------------------------------------------------------------------
 # Assets view: assets stats
 def card_table_assets_stats(assets_list, start_date=None, end_date=None):
