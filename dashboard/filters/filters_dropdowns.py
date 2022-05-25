@@ -1,4 +1,5 @@
 from dash import dcc
+import dash_bootstrap_components as dbc
 from ..hconn import sec_list
 
 # --------------------------------------------------------------------------------------------------------------
@@ -40,3 +41,5 @@ dropdown_securities_list = dcc.Dropdown(options=dropdown_securities_list_options
                                         multi=True,clearable=True,searchable=True,id='dropdown_securities_list'
                                         )
 
+checklist_securities_list = dbc.Checklist(options=dropdown_securities_list_options,
+                                          value=['SWDA'],id='checklist_securities_list')

@@ -1,12 +1,28 @@
 import dash_bootstrap_components as dbc
 from dash import html
-from .filters_dropdowns import dropdown_securities_list
+from .filters_dropdowns import dropdown_securities_list, checklist_securities_list
 
 
 # --------------------------------------------------------------------------------------------------------------
 # Securities selection modal
 modal_header = dbc.ModalHeader(dbc.ModalTitle("Search & select securities"),close_button=False)
 
+
+accordion = html.Div( dbc.Accordion(
+                                    [
+                                        dbc.AccordionItem(
+                                            dropdown_securities_list,
+                                            title="Select Securities 1"
+                                        ),
+
+                                        # dbc.AccordionItem(
+                                        #     checklist_securities_list,
+                                        #     title="Select Securities"
+                                        # )
+                                    ],
+                                    flush=True,
+                                ),
+                            )
 
 modal_body = dbc.ModalBody(children=[dbc.CardBody(dropdown_securities_list)])
 
