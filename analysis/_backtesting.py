@@ -41,7 +41,6 @@ class BackTest:
         transaction price and weight out of the investment capital.
         """
         assets_units = []
-        
         for ind, wei in enumerate(weights):
             assets_units.append(self._calc_single_asset_units(transaction_prices[ind], wei*capital))
         # print(transaction_prices, weights, capital, assets_units)
@@ -223,6 +222,38 @@ class BackTest:
         df['TOTAL_FEES'] = df[['PCT_FEES','FLAT_FEES']].sum(axis=1)
         
         return df
+
+     # ---------------------------------------------------------------------------------------------------
+    def _calc_buy_hold(self, df, original_transaction, original_weights=None):
+        """
+        Calculate buy and hold value for a portfolio of holdings. The portfolio might be invested in equal weights
+        to all assets or be weighted using the weights list passed as a parameter.
+        Arguments:
+        ----------
+        df: Pandas DataFrame with asset prices for the calculation of the portfolio value (asset names as columns, dates as index, prices as values)
+        original_transaction: list with asset prices for first transation
+        ----------
+        The number of not N/A df columns should be the same as the length of the original_transaction and original_weights lists.
+        """
+
+        if original_weights is None:
+            num_assets = len(df.columns)
+            original_weights = [i/num_assets for i in _np.ones(num_assets)]
+        
+        original_units = self._calc_units_based_on_weights(transaction_prices=original_transaction,
+                                                            weights=original_weights,
+                                                            capital=self._initial_capital)
+        
+        # Leftover cash from investment - initial capital mismatch
+        residual_cash = self._initial_capital - sum([a * b for a, b in zip(original_units, original_transaction)])
+
+        # Buy and hold value incl residual cash
+        bh = _pd.DataFrame(df*original_units).sum(axis=1) + residual_cash
+        bh.iloc[0] = self._initial_capital
+        bh.columns=['BUY_HOLD']
+        
+        return bh
+
     # ---------------------------------------------------------------------------------------------------
     def calc_weights(self, df):
         """
@@ -244,9 +275,9 @@ class BackTest:
         weights_df = weights_df.div(df['VALUE'],axis=0)
         
         return weights_df
-        
+    
     # ---------------------------------------------------------------------------------------------------
-    def evaluate_strategy(self, prices_df, signals_df, verbose=True):
+    def evaluate_strategy(self, prices_df, signals_df, verbose=True, original_weights=None):
         """
         Strategy evaluation based on asset prices and signals. Signal is translated to weight on the date
         the strategy rebalances but afterwards it behaves as a buy and hold strategy until the next rebalancing
@@ -280,7 +311,7 @@ class BackTest:
         units_names = ['UNT_'+i for i in prices_df.columns]
 
         # Units, Net_Purchases, Cash, Value
-        labels = units_names + ['NET_PURCHASES','CASH','VALUE']
+        labels = units_names + ['NET_PURCHASES','CASH','VALUE','BUY_HOLD']
 
         # Concat (actual and transaction) prices and signals/weights
         df = _pd.concat([prices_df, signals_df, trp_df],axis=1)
@@ -292,7 +323,7 @@ class BackTest:
 
         # Add an origin date at the start of the df and set units, net purchases, cash and value
         origin = _pd.DataFrame(index=[df.index[0]-timedelta(1)],columns = df.columns, data=_np.NaN)
-        origin[['VALUE','CASH']] = self._initial_capital
+        origin[['VALUE','CASH','BUY_HOLD']] = self._initial_capital
         origin[['NET_PURCHASES']] = 0
         origin[units_names] = 0
 
@@ -305,10 +336,17 @@ class BackTest:
         # Calculate fees
         df = self._calc_fees(df=df)
 
+        # Calculate buy and hold
+        original_transaction = list(df[[i for i in df.columns if 'TRP_' in i]].iloc[1])
+        if original_weights is None:
+            original_weights = list(df[[i for i in df.columns if 'SIG_' in i]].iloc[1])
+
+        df['BUY_HOLD'] = self._calc_buy_hold(df=df[assets_names], original_transaction=original_transaction, original_weights=original_weights)
+
         if verbose:
             return df.copy()
         else: 
             # Return only asset prices, asset units, net purchases, cash balance, fees and value
             columns = assets_names + labels + ['PCT_FEES','FLAT_FEES','TOTAL_FEES']
             return df[ columns ].copy()
-    # ---------------------------------------------------------------------------------------------------
+   
