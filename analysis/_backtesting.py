@@ -300,7 +300,11 @@ class BackTest:
 
         # Change signals df columns names (CNT: count of non-zero signals)
         signals_df.columns = ['SIG_'+i for i in signals_df.columns]
-        signals_df['CNT'] = signals_df.sum(axis=1)
+        if len(signals_df.columns) == 1:
+            signals_df['CNT'] = (signals_df>0)*1+0
+
+        else:
+            signals_df['CNT'] = signals_df.sum(axis=1)
         signals_df = signals_df.div(signals_df['CNT'],axis=0).replace(_np.NaN,0)
 
         # Transaction prices df and columns names
