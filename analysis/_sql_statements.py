@@ -274,7 +274,7 @@ sql_security_delete_query = """
                         """
 
 sql_etf_data_delete_query = """
-                        DELETE FROM etf_data WHERE ft_symbol = %s
+                        DELETE FROM etfs_data WHERE ft_symbol = %s
                         """
 # ------------------------------------------------------------------------------------------
 # JOINS
