@@ -8,11 +8,12 @@ from ._portfolio import Portfolio
 
 class HerokuDB:
     
-    def __init__(self, uri):
+    def __init__(self, uri, local_mode=False):
         self.uri = uri
         self._conn = None
         self._cur = None
         self.url = 'https://trader.degiro.nl/product_search/config/dictionary'
+        self.local_mode = local_mode
     
     # --------------------------------------------------------------------------------------------
     def connect(self):
@@ -20,11 +21,16 @@ class HerokuDB:
         Connect to herokuDB based on the provided uri. Return connection and cursor.
         '''
         try:
-            self._conn = _psycopg2.connect(self.uri, sslmode='require')
+            if self.local_mode:
+                self._conn = _psycopg2.connect(self.uri)
+
+            else:
+                self._conn = _psycopg2.connect(self.uri, sslmode='require')
+                
             self._conn.set_session(autocommit=True)
             self._cur = self._conn.cursor()
             print('Connected to DB, cursor is created')
-            
+        
         except Exception as e:
             print(e.args)
     
