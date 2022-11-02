@@ -8,7 +8,7 @@ from ..analysis import calc_cumulative_ret, calc_annualised_ret, calc_annualised
 load_dotenv(dotenv_path=os.getcwd()+'/qlab/.env')
 
 # Connect to Heroku PostgreSQL
-db = HerokuDB(os.environ.get("HERO_URI"))
+db = HerokuDB(os.environ.get("LOCAL_URI"), local_mode=True)
 
 db.connect()
 

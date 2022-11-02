@@ -40,7 +40,7 @@ def ft_aggregate(etfs_list, how_securities=_top_10[0]):
             print(str(count+1) + ' out of ' + str(ln) + ' done', end = "\r")
          
         except Exception as e:
-            print(etf + ': ' + e.args)
+            print(etf + ': ' + str(e.args))
         
     return df.fillna('-1')
 
