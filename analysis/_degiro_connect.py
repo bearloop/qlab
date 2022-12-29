@@ -2,6 +2,7 @@ import requests as _requests
 import pandas as _pd
 import json as _json
 from datetime import datetime as _datetime
+import os
 
 class DeGiro():
 
@@ -14,6 +15,7 @@ class DeGiro():
         self._SRCH_URL = 'v5/products/lookup?intAccount='
         self.credentials = None
         self.shortcuts = ['YTD', 'P1D', 'P1W', 'P1M', 'P3M', 'P6M', 'P1Y', 'P3Y', 'P5Y', 'P50Y']
+        self.user_agent = os.environ.get("USER_AGENT")
 
     # --------------------------------------------------------------------------------------------------------------
     def login(self):
@@ -35,6 +37,7 @@ class DeGiro():
         
         try:
             config_data, secID = self._get_config_data()
+            # print(config_data , secID)
             
             pa_url = config_data['data']['paUrl']
             
@@ -43,7 +46,7 @@ class DeGiro():
             product_search_url = config_data['data']['productSearchUrl']
             
             try:
-                client_info = _requests.get(url_client)
+                client_info = _requests.get(url_client, headers = {'user-agent': self.user_agent})
 
                 client_data =  _json.loads(client_info.content.decode("utf-8"))
                 
@@ -71,7 +74,7 @@ class DeGiro():
             secID = self._get_session_id()
             
             if secID is not None:
-                updConfig =  _requests.get(self._CONFIG_URL, headers = {'Cookie':'JSESSIONID='+secID+';'})
+                updConfig =  _requests.get(self._CONFIG_URL, headers = {'Cookie':'JSESSIONID='+secID+';','user-agent':self.user_agent})
                 
                 if updConfig.status_code ==  200:
                     config_data = _json.loads(updConfig.content.decode("utf-8"))
@@ -89,10 +92,13 @@ class DeGiro():
         
         try:
             de_giro = _requests.post(self._LOGIN_URL,
-                                     headers = {'Content-Type': 'application/json'},
+                                     headers = {
+                                        'Content-Type': 'application/json',
+                                        'user-agent': self.user_agent,
+                                        },
                                      json= {'username': self.user, 'password': self.psw} )
-
-            secID = de_giro.headers['Set-Cookie'].split('JSESSIONID=')[1].split(';')[0]
+            # secID = de_giro.headers['Set-Cookie'].split('JSESSIONID=')[1].split(';')[0]
+            secID = de_giro.json()['sessionId']
             
             return secID
             
