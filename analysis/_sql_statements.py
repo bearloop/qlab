@@ -18,6 +18,12 @@ sql_prices_table_create = """
                               data text NOT NULL)
                            """
 
+sql_rates_table_create = """
+                          CREATE TABLE IF NOT EXISTS rates (
+                              symbol text NOT NULL PRIMARY KEY,
+                              data text NOT NULL)
+                           """
+
 sql_transactions_table_create = """
                                 CREATE TABLE IF NOT EXISTS transactions(
                                    id integer NOT NULL PRIMARY KEY,
@@ -94,6 +100,8 @@ sql_ishares_table_drop = """DROP TABLE IF EXISTS ishares"""
 
 sql_prices_table_drop = """DROP TABLE IF EXISTS prices"""
 
+sql_rates_table_drop = """DROP TABLE IF EXISTS rates"""
+
 sql_transactions_table_drop = """DROP TABLE IF EXISTS transactions"""
 
 sql_securities_table_drop = """DROP TABLE IF EXISTS securities"""
@@ -128,6 +136,15 @@ sql_ishares_insert_query = """
 
 sql_prices_insert_query = """
                         INSERT INTO prices (
+                             symbol,
+                             data)
+                             VALUES (%s, %s)
+                             ON CONFLICT (symbol)
+                                 DO UPDATE SET data = EXCLUDED.data
+                        """
+
+sql_rates_insert_query = """
+                        INSERT INTO rates (
                              symbol,
                              data)
                              VALUES (%s, %s)
@@ -255,6 +272,10 @@ sql_ishares_delete_query = """
 
 sql_prices_delete_query = """
                            DELETE FROM prices WHERE symbol = %s
+                           """
+
+sql_rates_delete_query = """
+                           DELETE FROM rates WHERE symbol = %s
                            """
 
 sql_transactions_delete_query = """

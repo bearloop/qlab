@@ -6,3 +6,4 @@ from ._tables import *
 from ._visuals import *
 from ._utilities import *
 from ._heroku_connect import *
+from ._yields_data import *

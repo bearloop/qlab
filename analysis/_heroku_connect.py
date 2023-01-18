@@ -5,7 +5,7 @@ from ._ft_market_data import ft_aggregate, ft_summary, ft_sectors, ft_securities
 from ._sql_statements import *
 from ._utilities import _convert_df_to_str, _convert_str_to_df
 from ._portfolio import Portfolio
-
+from ._yields_data import update_govt_yields
 class HerokuDB:
     
     def __init__(self, uri, local_mode=False):
@@ -220,6 +220,71 @@ class HerokuDB:
             # Finally save the string to the table
             self.execute_sql(query = sql_prices_insert_query, data=(asset, prices_as_string))
     
+    # --------------------------------------------------------------------------------------------
+    def rates_table_update(self, df=None):
+        """ Update rates table with df or auto (if df is None)"""
+
+        if df is None:
+            df = update_govt_yields()
+
+        for item in df.columns:
+
+            # First read existing data:
+            try:
+                # if item is in table you'll be able to read
+                existing_data = self.rates_table_read(rate=item)
+            except:
+                # Otherwise pass an empty df back
+                existing_data = _pd.DataFrame()
+
+            # Then use combine_first to upsert data to existing df
+            df_combined = _pd.DataFrame(df[item]).combine_first(existing_data)
+
+            # ..and convert the combined df to string
+            items_as_string = _convert_df_to_str(df_combined, column=item)
+
+            # Finally save the string to the table
+            self.execute_sql(query = sql_rates_insert_query, data=(item, items_as_string))
+
+    # --------------------------------------------------------------------------------------------
+    def rates_table_read(self, term_spread=False, rate=None):
+        """ Read from rates table"""
+        try:
+            if rate is None:
+                query = "SELECT * FROM rates"
+            else:
+                query = "SELECT * FROM rates WHERE symbol = '{}'".format(rate)
+
+            # Fetch data and create a data frame
+            self.execute_sql(query)
+            df = self.fetch()
+            df = df.set_index('symbol').T
+
+            results = _pd.DataFrame()
+
+            # Unpack data and move them to a dataframe
+            for item in df.columns:
+                values = df.loc['data',item]
+                rates_as_df = _convert_str_to_df(values, item)
+                results = _pd.concat([results,rates_as_df],axis=1)
+
+            if term_spread:
+                # Create arrays for the features and the response variable
+                results['US_2Y_3M']  = results['US_2Y']  - results['US_3M']
+                results['US_10Y_3M'] = results['US_10Y'] - results['US_3M']
+                results['US_10Y_2Y'] = results['US_10Y'] - results['US_2Y']
+                results['US_30Y_5Y'] = results['US_30Y'] - results['US_5Y']
+
+                results['GE_2Y_3M']  = results['GE_2Y']  - results['EA_3M']
+                results['GE_10Y_3M'] = results['GE_10Y'] - results['EA_3M']
+                results['GE_10Y_2Y'] = results['GE_10Y'] - results['GE_2Y']
+                results['GE_30Y_5Y'] = results['GE_30Y'] - results['GE_5Y']
+
+            return results
+
+        except Exception as e:
+            print(e.args)
+            
     # --------------------------------------------------------------------------------------------
     def _read_price_time_series_data(self, assets_list=None, portfolio=True):
         """ """
