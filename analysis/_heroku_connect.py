@@ -92,12 +92,18 @@ class HerokuDB:
             records = self._cur.fetchmany(limit)
             
             col_names = [elt[0] for elt in self._cur.description]
-            
+            df = _pd.DataFrame(records, columns = col_names)
+
+            # fix for transactions so that they are ordered by id
+            if 'id' in df.columns:
+                df = df.sort_values(by='id')
+                df.index = [i for i in range(len(df.index))]
+                
             if index_name is None:
-                return _pd.DataFrame(records, columns = col_names)
+                return df
             
             else:
-                return _pd.DataFrame(records, columns = col_names).set_index(index_name)
+                return df.set_index(index_name)
         
         except Exception as e:
             print(e.args)
