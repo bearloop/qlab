@@ -515,6 +515,7 @@ def plot_treemap(df, sort_by='1-yr', frame=True, chart_title='Performance', midp
     midpoint: 0 or None
     colorbar, reverse, to_return: boolean
     """
+    display(df)
     if df is None: 
         return _plot_none(chart_title=chart_title, width=width, height=height)
     

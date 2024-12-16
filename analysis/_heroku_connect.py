@@ -325,10 +325,11 @@ class HerokuDB:
             print(e.args)
     
     # --------------------------------------------------------------------------------------------
-    def prices_table_read(self, assets_list=None, portfolio=True):
+    def prices_table_read(self, assets_list=None, portfolio=True, cash=100000):
 
         results = self._read_price_time_series_data(assets_list=assets_list, portfolio=portfolio)
-
+        if 'CASH' not in results.columns:
+            results['CASH'] = cash
         if portfolio:
                 port = Portfolio(heroku_conn=self).fetch_data()
                 results = _pd.concat([results, port['PORT']],axis=1)
@@ -366,6 +367,7 @@ class HerokuDB:
         ms = self.fetch()
         ms.index = ms.symbol
         ms.loc['PORT',:] = ['PORT','Portfolio','Portfolio']
+        ms.loc['CASH',:] = ['CASH','Cash','Cash']
 
         return ms
     

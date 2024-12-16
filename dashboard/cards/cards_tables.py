@@ -69,7 +69,7 @@ def table_portfolio_fund_details(assets_list, db):
 # Porfolio view: securities statistics table
 def table_portfolio_stats(assets_list, start_date=None):
 
-    df = pdt[list(assets_list)+['PORT']].copy()
+    df = pdt[list(assets_list)+['PORT','CASH']].copy()
     
     if start_date is not None:
         df = df.loc[start_date:,:]

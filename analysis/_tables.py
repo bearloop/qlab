@@ -100,7 +100,8 @@ def table_portfolio_concentration(assets_list=None, weights=None, db=None, verbo
     
     # Retrieve json
     for ind, etf in enumerate(assets_list):
-        df = _pd.concat([df,_ishares_constituents(ishares[etf], weights[ind])])
+        if etf!='CASH':
+            df = _pd.concat([df,_ishares_constituents(ishares[etf], weights[ind])])
     
     # Group by security and keep weights first
     w = df.groupby(group_by).sum().sort_values(by='Weight', ascending=False)[['Weight']]
@@ -185,6 +186,7 @@ def table_holdings_summary(db=None):
     # Last unit price per symbol
     asset_prices = db.prices_table_read()
     asset_prices = asset_prices.ffill()
+    
     df['last_price'] = asset_prices[df.index].iloc[-1]
     
     # Position value per symbol
